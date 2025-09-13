@@ -23,6 +23,8 @@ const eslintConfig = [
       '*.config.js',
       '*.config.mjs',
       '*.config.ts',
+      'src/generated/**',
+      '.prisma/**',
     ],
   },
   // Configuration for source files
