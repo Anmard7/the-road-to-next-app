@@ -17,7 +17,7 @@ const TicketItem = ({ ticket, isDetail }: TicketItemProps) => {
   console.log('Where is this component being rendered? (TicketItem)');
 
   const detailButton = (
-    <Link
+    <Link prefetch
       href={ticketPath(ticket.id)}
       className={buttonVariants({ variant: 'outline', size: 'icon' })}
     >
