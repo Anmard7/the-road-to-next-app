@@ -1,3 +1,4 @@
+"use client";
 import { ThemeProvider as BaseThemeProvider } from "next-themes";
 
 type ThemeProviderProps = {
