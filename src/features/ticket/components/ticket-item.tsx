@@ -1,10 +1,14 @@
 import clsx from 'clsx';
-import { LucideSquareArrowOutUpRight, LucideTrash } from 'lucide-react';
+import {
+  LucidePencil,
+  LucideSquareArrowOutUpRight,
+  LucideTrash,
+} from 'lucide-react';
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Ticket } from '@/generated/prisma/client';
-import { ticketPath } from '@/path';
+import { ticketEditPath, ticketPath } from '@/path';
 import { deleteTicket } from '../actions/delete-ticket';
 import { TICKET_ICON } from '../constants';
 
@@ -13,18 +17,25 @@ type TicketItemProps = {
   isDetail?: boolean;
 };
 
-const TicketItem = ({ ticket, isDetail }: TicketItemProps) => {
-  console.log('Where is this component being rendered? (TicketItem)');
-
+const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
   const detailButton = (
-    <Link prefetch
+    <Link
+      prefetch
       href={ticketPath(ticket.id)}
       className={buttonVariants({ variant: 'outline', size: 'icon' })}
     >
       <LucideSquareArrowOutUpRight className='h-4 w-4' />
     </Link>
   );
-
+  const editButton = (
+    <Link
+      prefetch
+      href={ticketEditPath(ticket.id)}
+      className={buttonVariants({ variant: 'outline', size: 'icon' })}
+    >
+      <LucidePencil className='h-4 w-4' />
+    </Link>
+  );
   const deleteButton = (
     <form action={deleteTicket.bind(null, ticket.id)}>
       <Button variant='outline' size='icon'>
@@ -35,12 +46,7 @@ const TicketItem = ({ ticket, isDetail }: TicketItemProps) => {
   );
 
   return (
-    <div
-      className={clsx(
-        'flex w-full gap-1.5',
-        isDetail ? 'max-w-xl' : 'max-w-[420px]',
-      )}
-    >
+    <div className='flex w-full gap-1.5'>
       <Card className='w-full'>
         <CardHeader>
           <CardTitle className='flex gap-x-2'>
@@ -60,7 +66,18 @@ const TicketItem = ({ ticket, isDetail }: TicketItemProps) => {
         </CardContent>
       </Card>
       <div className='flex shrink-0 flex-col gap-1.5'>
-        {isDetail ? deleteButton : detailButton}
+        {isDetail ? (
+          <>
+          {editButton}
+            {deleteButton}
+            
+          </>
+        ) : (
+          <>
+            {detailButton}
+            {editButton}
+          </>
+        )}
       </div>
     </div>
   );
