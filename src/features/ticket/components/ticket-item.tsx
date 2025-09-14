@@ -68,9 +68,8 @@ const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
       <div className='flex shrink-0 flex-col gap-1.5'>
         {isDetail ? (
           <>
-          {editButton}
+            {editButton}
             {deleteButton}
-            
           </>
         ) : (
           <>
