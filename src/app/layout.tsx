@@ -1,22 +1,23 @@
-import "./globals.css";
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Header } from "@/components/header";
-import { ThemeProvider } from "@/components/theme/theme-provider";
+import './globals.css';
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import { Header } from '@/components/header';
+import { ThemeProvider } from '@/components/theme/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "The Road to Next",
-  description: "My Road to Next app",
+  title: 'The Road to Next',
+  description: 'My Road to Next app',
 };
 
 export default function RootLayout({
@@ -24,25 +25,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang='en' suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-        <Header/>
-        <main
-          className="
-            min-h-screen flex-1
-            overflow-y-auto overflow-x-hidden
-            py-24 px-8
-            bg-secondary/20
-            flex flex-col
-          "
-        >
-          {children}
-        </main>
+          <Header />
+          <main className='bg-secondary/20 flex min-h-screen flex-1 flex-col overflow-x-hidden overflow-y-auto px-8 py-24'>
+            {children}
+          </main>
+          <Toaster richColors expand />
         </ThemeProvider>
       </body>
     </html>
