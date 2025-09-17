@@ -2,6 +2,7 @@
 import { Label } from '@radix-ui/react-label';
 import { useActionState } from 'react';
 import { toast } from 'sonner';
+import { DatePicker } from '@/components/date-picker';
 import FieldError from '@/components/form/field-error';
 import { Form } from '@/components/form/form';
 import { useActionFeedback } from '@/components/form/hooks/use-action-feedback';
@@ -10,6 +11,7 @@ import { EMPTY_ACTION_STATE } from '@/components/form/utils/to-action-state';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Ticket } from '@/generated/prisma';
+import { fromCent } from '@/utils/currency';
 import { upsertTicket } from '../actions/upsert-ticket';
 
 type TicketUpsertFormProps = {
@@ -45,7 +47,37 @@ const TicketUpsertForm = ({ ticket }: TicketUpsertFormProps) => {
         //required
       />
       <FieldError actionState={actionState} name='content' />
+      <div className='mb-1 flex gap-x-2'>
+        <div className='w-1/2'>
+          <Label htmlFor='deadline'>Deadline</Label>
+          <DatePicker
+            name='deadline'
+            id='deadline'
+            defaultValue={
+              actionState.payload?.get('deadline')?.toString() ??
+              ticket?.deadline
+            }
+            //required
+          />
 
+          <FieldError actionState={actionState} name='deadline' />
+        </div>
+        <div className='w-1/2'>
+          <Label htmlFor='bounty'>Bounty ($)</Label>
+          <Input
+            type='number'
+            name='bounty'
+            id='bounty'
+            step='0.01'
+            defaultValue={
+              actionState.payload?.get('bounty')?.toString() ??
+              (ticket?.bounty ? fromCent(ticket?.bounty) : '')
+            }
+            //required
+          />
+          <FieldError actionState={actionState} name='bounty' />
+        </div>
+      </div>
       <SubmitButton label={ticket ? 'Update' : 'Create'} />
       {/* {actionState?.message && <p>{actionState.message}</p>} */}
     </Form>

@@ -10,6 +10,7 @@ import {
 } from '@/components/form/utils/to-action-state';
 import { prisma } from '@/lib/prisma';
 import { ticketPath, ticketsPath } from '@/path';
+import { toCent } from '@/utils/currency';
 
 const upsertTicketSchema = z.object({
   title: z
@@ -20,6 +21,8 @@ const upsertTicketSchema = z.object({
     .string()
     .min(10, 'Content must be at least 10 characters long')
     .max(1024, 'Content cannot exceed 1024 characters'),
+  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Deadline is required'),
+  bounty: z.coerce.number().positive('Bounty must be greater than 0'),
 });
 export const upsertTicket = async (
   id: string | undefined,
@@ -30,12 +33,17 @@ export const upsertTicket = async (
     const validatedData = upsertTicketSchema.parse({
       title: formData.get('title')?.toString().trim(),
       content: formData.get('content')?.toString().trim(),
+      deadline: formData.get('deadline')?.toString().trim(),
+      bounty: formData.get('bounty')?.toString().trim(),
     });
-
+    const dbData = {
+      ...validatedData,
+      bounty: toCent(validatedData.bounty),
+    };
     await prisma.ticket.upsert({
       where: { id: id || '' },
-      update: validatedData,
-      create: validatedData,
+      update: dbData,
+      create: dbData,
     });
   } catch (error) {
     return fromErrorToActionState(error, formData);

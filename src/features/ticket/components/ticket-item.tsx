@@ -6,9 +6,16 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Ticket } from '@/generated/prisma/client';
 import { ticketEditPath, ticketPath } from '@/path';
+import { toCurrencyFromCents } from '@/utils/currency';
 import { deleteTicket } from '../actions/delete-ticket';
 import { TICKET_ICON } from '../constants';
 
@@ -64,6 +71,12 @@ const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
             {ticket.content}
           </p>
         </CardContent>
+        <CardFooter className='flex justify-between'>
+          <p className='text-muted-foreground text-sm'>{ticket.deadline}</p>
+          <p className='text-muted-foreground text-sm'>
+            {toCurrencyFromCents(ticket.bounty)}
+          </p>
+        </CardFooter>
       </Card>
       <div className='flex shrink-0 flex-col gap-1.5'>
         {isDetail ? (
