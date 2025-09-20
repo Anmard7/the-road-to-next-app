@@ -1,8 +1,8 @@
 import clsx from 'clsx';
 import {
+  LucideArrowUpRightFromSquare,
+  LucideMoreVertical,
   LucidePencil,
-  LucideSquareArrowOutUpRight,
-  LucideTrash,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -16,8 +16,8 @@ import {
 import { Ticket } from '@/generated/prisma/client';
 import { ticketEditPath, ticketPath } from '@/path';
 import { toCurrencyFromCents } from '@/utils/currency';
-import { deleteTicket } from '../actions/delete-ticket';
 import { TICKET_ICON } from '../constants';
+import { TicketMoreMenu } from './ticket-more-menu';
 
 type TicketItemProps = {
   ticket: Ticket;
@@ -26,13 +26,11 @@ type TicketItemProps = {
 
 const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
   const detailButton = (
-    <Link
-      prefetch
-      href={ticketPath(ticket.id)}
-      className={buttonVariants({ variant: 'outline', size: 'icon' })}
-    >
-      <LucideSquareArrowOutUpRight className='h-4 w-4' />
-    </Link>
+    <Button variant='outline' size='icon' asChild>
+      <Link prefetch href={ticketPath(ticket.id)}>
+        <LucideArrowUpRightFromSquare className='h-4 w-4' />
+      </Link>
+    </Button>
   );
   const editButton = (
     <Link
@@ -43,13 +41,16 @@ const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
       <LucidePencil className='h-4 w-4' />
     </Link>
   );
-  const deleteButton = (
-    <form action={deleteTicket.bind(null, ticket.id)}>
-      <Button variant='outline' size='icon'>
-        <LucideTrash className='h-4 w-4' />
-        <span className='sr-only'>Delete ticket</span>
-      </Button>
-    </form>
+
+  const moreMenu = (
+    <TicketMoreMenu
+      ticket={ticket}
+      trigger={
+        <Button variant='outline' size='icon'>
+          <LucideMoreVertical className='size-4' />
+        </Button>
+      }
+    />
   );
 
   return (
@@ -82,12 +83,13 @@ const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
         {isDetail ? (
           <>
             {editButton}
-            {deleteButton}
+            {moreMenu}
           </>
         ) : (
           <>
             {detailButton}
             {editButton}
+            {moreMenu}
           </>
         )}
       </div>

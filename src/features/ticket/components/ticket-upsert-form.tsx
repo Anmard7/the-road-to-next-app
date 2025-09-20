@@ -1,11 +1,12 @@
 'use client';
 import { Label } from '@radix-ui/react-label';
-import { useActionState } from 'react';
-import { toast } from 'sonner';
-import { DatePicker } from '@/components/date-picker';
+import { useActionState, useRef } from 'react';
+import {
+  DatePicker,
+  ImperativeHandleFormDatePicker,
+} from '@/components/date-picker';
 import FieldError from '@/components/form/field-error';
 import { Form } from '@/components/form/form';
-import { useActionFeedback } from '@/components/form/hooks/use-action-feedback';
 import { SubmitButton } from '@/components/form/submit-button';
 import { EMPTY_ACTION_STATE } from '@/components/form/utils/to-action-state';
 import { Input } from '@/components/ui/input';
@@ -23,8 +24,14 @@ const TicketUpsertForm = ({ ticket }: TicketUpsertFormProps) => {
     EMPTY_ACTION_STATE,
   );
 
+  const datePickerImperativeHandleRef =
+    useRef<ImperativeHandleFormDatePicker | null>(null);
+  const handleSuccess = () => {
+    datePickerImperativeHandleRef.current?.reset();
+  };
+
   return (
-    <Form action={action} actionState={actionState}>
+    <Form action={action} actionState={actionState} onSuccess={handleSuccess}>
       <Label htmlFor='title'>Title</Label>
       <Input
         type='text'
@@ -51,13 +58,14 @@ const TicketUpsertForm = ({ ticket }: TicketUpsertFormProps) => {
         <div className='w-1/2'>
           <Label htmlFor='deadline'>Deadline</Label>
           <DatePicker
+            //key={actionState.timestamp} // to force re-render the date picker and reset the date
             name='deadline'
             id='deadline'
             defaultValue={
               actionState.payload?.get('deadline')?.toString() ??
               ticket?.deadline
             }
-            //required
+            ref={datePickerImperativeHandleRef}
           />
 
           <FieldError actionState={actionState} name='deadline' />

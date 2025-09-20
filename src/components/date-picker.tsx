@@ -2,7 +2,7 @@
 
 import { format } from 'date-fns';
 import { LucideChevronDown } from 'lucide-react';
-import { useState } from 'react';
+import { forwardRef, useImperativeHandle, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -11,19 +11,47 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 
+export type ImperativeHandleFormDatePicker = {
+  reset: () => void;
+};
+
 type DatePickerProps = {
   name: string;
   id: string;
   defaultValue?: string | undefined;
 };
 
-export const DatePicker = ({ name, id, defaultValue }: DatePickerProps) => {
+export const DatePicker = forwardRef<
+  ImperativeHandleFormDatePicker,
+  DatePickerProps
+>(({ name, id, defaultValue }: DatePickerProps, ref) => {
   const [open, setOpen] = useState(false);
-  const [date, setDate] = useState<Date | undefined>(
-    defaultValue ? new Date(defaultValue) : new Date(),
-  );
 
-  const formattedStringDate = date ? format(date, 'yyyy-MM-dd') : 'Select date';
+  // Parse a yyyy-MM-dd string as a local date to avoid timezone shifts.
+  const parseLocalDate = (value?: string) => {
+    if (!value) return undefined;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!m) return undefined;
+    const [, y, mo, d] = m;
+    return new Date(Number(y), Number(mo) - 1, Number(d));
+  };
+  const initialDate = parseLocalDate(defaultValue) ?? new Date();
+  const [date, setDate] = useState<Date | undefined>(initialDate);
+  useImperativeHandle(
+    ref,
+    () => ({
+      reset: () => {
+        setDate(parseLocalDate(defaultValue) ?? undefined);
+      },
+    }),
+    [defaultValue],
+  );
+  const handleSelect = (selecteddate: Date | undefined) => {
+    setDate(selecteddate);
+    setOpen(false);
+  };
+  const displayDate = date ? format(date, 'yyyy-MM-dd') : 'Select date';
+  const hiddenValue = date ? format(date, 'yyyy-MM-dd') : '';
 
   return (
     <div className='flex flex-col gap-3'>
@@ -40,13 +68,8 @@ export const DatePicker = ({ name, id, defaultValue }: DatePickerProps) => {
             id={id}
             className='justify-between font-normal'
           >
-            {formattedStringDate}
-            <input
-              type='hidden'
-              name={name}
-              id={id}
-              value={formattedStringDate}
-            />
+            {displayDate}
+            <input type='hidden' name={name} id={id} value={hiddenValue} />
             <LucideChevronDown />
           </Button>
         </PopoverTrigger>
@@ -55,13 +78,12 @@ export const DatePicker = ({ name, id, defaultValue }: DatePickerProps) => {
             mode='single'
             selected={date}
             captionLayout='dropdown'
-            onSelect={(date) => {
-              setDate(date);
-              setOpen(false);
-            }}
+            onSelect={handleSelect}
           />
         </PopoverContent>
       </Popover>
     </div>
   );
-};
+});
+
+DatePicker.displayName = 'DatePicker';
