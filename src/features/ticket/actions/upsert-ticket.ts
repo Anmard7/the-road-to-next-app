@@ -21,7 +21,9 @@ const upsertTicketSchema = z.object({
     .string()
     .min(10, 'Content must be at least 10 characters long')
     .max(1024, 'Content cannot exceed 1024 characters'),
-  deadline: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Deadline is required'),
+  deadline: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Deadline is required' }),
   bounty: z.coerce.number().positive('Bounty must be greater than 0'),
 });
 export const upsertTicket = async (
