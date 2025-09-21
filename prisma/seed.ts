@@ -1,6 +1,18 @@
+import { hashPassword } from '@/features/password/utils/hash-and-verify';
 import { PrismaClient } from '@/generated/prisma';
 
 const prisma = new PrismaClient();
+
+const users = [
+  {
+    username: 'admin',
+    email: 'admin@admin.com',
+  },
+  {
+    username: 'user',
+    email: 'anmard@gmail.com',
+  },
+];
 
 const tickets = [
   {
@@ -30,9 +42,22 @@ const seed = async () => {
   console.log('Seeding database...');
   const t0 = performance.now();
 
-  await prisma.ticket.deleteMany();
+  const passwordHash = await hashPassword('password');
+
+  // With onDelete: Cascade, deleting users will automatically delete their tickets
+  await prisma.user.deleteMany();
+
+  const dbUsers = await prisma.user.createManyAndReturn({
+    data: users.map((user) => ({
+      ...user,
+      passwordHash,
+    })),
+  });
   await prisma.ticket.createMany({
-    data: tickets,
+    data: tickets.map((ticket) => ({
+      ...ticket,
+      userId: dbUsers[0].id,
+    })),
   });
 
   const t1 = performance.now();

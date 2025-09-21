@@ -13,14 +13,18 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Ticket } from '@/generated/prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { ticketEditPath, ticketPath } from '@/path';
 import { toCurrencyFromCents } from '@/utils/currency';
 import { TICKET_ICON } from '../constants';
 import { TicketMoreMenu } from './ticket-more-menu';
 
 type TicketItemProps = {
-  ticket: Ticket;
+  ticket: Prisma.TicketGetPayload<{
+    include: {
+      user: { select: { username: true } };
+    };
+  }>;
   isDetail?: boolean;
 };
 
@@ -73,7 +77,9 @@ const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
           </p>
         </CardContent>
         <CardFooter className='flex justify-between'>
-          <p className='text-muted-foreground text-sm'>{ticket.deadline}</p>
+          <p className='text-muted-foreground text-sm'>
+            {ticket.deadline} by {ticket.user.username}
+          </p>
           <p className='text-muted-foreground text-sm'>
             {toCurrencyFromCents(ticket.bounty)}
           </p>
