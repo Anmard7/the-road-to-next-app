@@ -5,6 +5,7 @@ import {
   LucidePencil,
 } from 'lucide-react';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
@@ -13,6 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { getAuth } from '@/features/auth/queries/get-auth';
+import { isOwner } from '@/features/auth/utils/is-owner';
 import { Prisma } from '@/generated/prisma/client';
 import { ticketEditPath, ticketPath } from '@/path';
 import { toCurrencyFromCents } from '@/utils/currency';
@@ -29,6 +32,9 @@ type TicketItemProps = {
 };
 
 const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
+  const { user } = await getAuth();
+  const isTicketOwner = isOwner(user, ticket);
+
   const detailButton = (
     <Button variant='outline' size='icon' asChild>
       <Link prefetch href={ticketPath(ticket.id)}>
@@ -36,7 +42,7 @@ const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
       </Link>
     </Button>
   );
-  const editButton = (
+  const editButton = isTicketOwner ? (
     <Link
       prefetch
       href={ticketEditPath(ticket.id)}
@@ -44,9 +50,9 @@ const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
     >
       <LucidePencil className='h-4 w-4' />
     </Link>
-  );
+  ) : null;
 
-  const moreMenu = (
+  const moreMenu = isTicketOwner ? (
     <TicketMoreMenu
       ticket={ticket}
       trigger={
@@ -55,7 +61,7 @@ const TicketItem = async ({ ticket, isDetail }: TicketItemProps) => {
         </Button>
       }
     />
-  );
+  ) : null;
 
   return (
     <div className='flex w-full gap-1.5'>

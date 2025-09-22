@@ -1,23 +1,23 @@
-import { LucideMessageSquareWarning, LucideProps } from "lucide-react";
-import { cloneElement } from "react";
+import { LucideMessageSquareWarning } from "lucide-react";
+import type { ReactNode } from "react";
 
 type PlaceholderProps = {
     label: string;
-    icon?: React.ReactElement<LucideProps>;
-    button?: React.ReactElement<{className?: string}>;
+    icon?: ReactNode;
+    button?: ReactNode;
 }
 
   const Placeholder = ({
     label, 
-    icon = <LucideMessageSquareWarning/>, 
-    button = <div />,
+    icon = <LucideMessageSquareWarning className="h-16 w-16" />, 
+    button,
   }: PlaceholderProps) => {
       return (
 
           <div className="flex-1 self-center flex flex-col items-center justify-center">
-            {cloneElement(icon, {className: "w-16 h-16"})}
+            <div className="flex items-center justify-center">{icon}</div>
             <h2 className = "text-lg text-center">{label}</h2>
-            {cloneElement(button, {className: "h-10"})}
+            {button ? <div className="h-10">{button}</div> : null}
           </div>
 
     )
