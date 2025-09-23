@@ -5,7 +5,6 @@ import {
   LucidePencil,
 } from 'lucide-react';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,

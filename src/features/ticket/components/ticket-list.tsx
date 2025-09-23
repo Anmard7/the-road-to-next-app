@@ -2,8 +2,11 @@ import { Placeholder } from "@/components/placeholder";
 import { getTickets } from "../queries/get-tickets";
 import { TicketItem } from "./ticket-item";
 
-const TicketList = async () => {
-  const tickets = await getTickets();
+type TicketListProps = {
+  userId?: string;
+};
+const TicketList = async ({ userId }: TicketListProps) => {
+  const tickets = await getTickets(userId);
 
   if (tickets.length === 0) {
     return <Placeholder label="No tickets yet" />;
