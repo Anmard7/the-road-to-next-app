@@ -1,8 +1,9 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import { Header } from '@/components/header';
-import { Sidebar } from '@/components/sidebar/sidebar';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import { Header } from '@/app/_navigation/header';
+import { Sidebar } from '@/app/_navigation/sidebar/sidebar';
 import { ThemeProvider } from '@/components/theme/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 
@@ -31,16 +32,18 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider>
-          <Header />
-          <div className=' flex h-screen overflow-hidden border-collapse'>
-            <Sidebar />
-            <main className='bg-secondary/20 flex min-h-screen flex-1 flex-col overflow-x-hidden overflow-y-auto px-8 py-24'>
-              {children}
-            </main>
-          </div>
-          <Toaster richColors expand />
-        </ThemeProvider>
+        <NuqsAdapter>
+          <ThemeProvider>
+            <Header />
+            <div className='flex h-screen border-collapse overflow-hidden'>
+              <Sidebar />
+              <main className='bg-secondary/20 flex min-h-screen flex-1 flex-col overflow-x-hidden overflow-y-auto px-8 py-24'>
+                {children}
+              </main>
+            </div>
+            <Toaster richColors expand />
+          </ThemeProvider>
+        </NuqsAdapter>
       </body>
     </html>
   );
