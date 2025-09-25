@@ -30,10 +30,7 @@ export const SortSelect = ({ options, value, onChange }: SortSelectProps) => {
   };
 
   return (
-    <Select
-      defaultValue={value.sortKey + '_' + value.sortValue}
-      onValueChange={handleSort}
-    >
+    <Select defaultValue={`${value.sortKey}_${value.sortValue}`} onValueChange={handleSort}>
       <SelectTrigger>
         <SelectValue placeholder='Sort by' />
       </SelectTrigger>
