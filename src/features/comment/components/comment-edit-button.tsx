@@ -11,7 +11,7 @@ type CommentEditButtonProps = {
 const CommentEditButton = ({ commentId }: CommentEditButtonProps) => {
   const [, setEditComment] = useQueryState(
     'editComment',
-    parseAsString.withOptions({ shallow: false, clearOnDefault: true }), // set shallow: false so the server reacts and re-renders the page
+    parseAsString.withDefault('').withOptions({ shallow: true, clearOnDefault: true }), // set shallow: true so the server doe not reacts/re-renders the page
   );
 
   return (

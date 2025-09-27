@@ -22,7 +22,7 @@ const CommentEditForm = ({
   // Clear only the edit key (preserve search/sort/page)
   const [, setEditComment] = useQueryState(
     'editComment',
-    parseAsString.withOptions({ shallow: false, clearOnDefault: true }),
+    parseAsString.withOptions({ shallow: true, clearOnDefault: true }), // shallow: true so that editor won’t trigger a full RSC pass or data refetch—snappier UX, no flicker and cheaper.
   );
 
   const [actionState, action] = useActionState(

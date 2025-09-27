@@ -4,6 +4,7 @@ import { CommentWithMetadata } from '../types';
 type CommentItemProps = {
   comment: CommentWithMetadata;
   buttons?: React.ReactNode[];
+  
 };
 
 const CommentItem = ({ comment, buttons = [] }: CommentItemProps) => {

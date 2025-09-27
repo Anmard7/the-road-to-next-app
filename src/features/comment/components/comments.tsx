@@ -6,6 +6,7 @@ import { CommentDeleteButton } from './comment-delete-button';
 import { CommentEditButton } from './comment-edit-button';
 import { CommentEditForm } from './comment-edit-form';
 import { CommentItem } from './comment-item';
+import { CommentRow } from './comment-row.client';
 import { CommentCreateForm } from './comments-create-form';
 
 type CommentsProps = {
@@ -27,36 +28,13 @@ const Comments = async ({
         content={<CommentCreateForm ticketId={ticketId} />}
       />
       <div className='ml-8 flex flex-col gap-y-2'>
-        {comments.map((comment) => {
-          const canEdit = isOwner(user, comment);
-          const isEditing = canEdit && comment.id === initialEditCommentId;
-
-          if (isEditing) {
-            return (
-              <CommentEditForm
-                key={comment.id}
-                commentId={comment.id}
-                initialContent={comment.content}
-              />
-            );
-          }
-
-          // Default (not editing) — keep your existing item + buttons
-          return (
-            <CommentItem
-              key={comment.id}
-              comment={comment}
-              buttons={
-                canEdit
-                  ? [
-                      <CommentEditButton key='edit' commentId={comment.id} />,
-                      <CommentDeleteButton key='delete' id={comment.id} />,
-                    ]
-                  : []
-              }
-            />
-          );
-        })}
+        {comments.map((comment) => (
+          <CommentRow
+            key={comment.id}
+            comment={comment}
+            canEdit={isOwner(user, comment)}
+          />
+        ))}
       </div>
     </>
   );
