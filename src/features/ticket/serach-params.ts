@@ -43,11 +43,16 @@ export const paginationOptions = {
   shallow: false,
   clearOnDefault: true,
 };
+export const editCommentParser = parseAsString.withDefault('').withOptions({
+  shallow: true,         // client-only updates for inline form (no RSC refetch)
+  clearOnDefault: true,
+});
 
 export const searchParamsCache = createSearchParamsCache({
   search: searchParser,
   ...sortParser,
   ...paginationParser,
+  editComment: editCommentParser,
 });
 
 export type ParsedSearchParams = Awaited<

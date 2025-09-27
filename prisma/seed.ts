@@ -37,6 +37,17 @@ const tickets = [
     bounty: 599, // $5.99
   },
 ];
+const comments = [
+  {
+    content: 'First comment on ticket 1 from database.',
+  },
+  {
+    content: 'Second comment on ticket 1 from database.',
+  },
+  {
+    content: 'Third comment on ticket 1 from database.',
+  },
+];
 
 const seed = async () => {
   console.log('Seeding database...');
@@ -45,6 +56,7 @@ const seed = async () => {
   const passwordHash = await hashPassword('password');
 
   // With onDelete: Cascade, deleting users will automatically delete their tickets
+  await prisma.comment.deleteMany();
   await prisma.user.deleteMany();
 
   const dbUsers = await prisma.user.createManyAndReturn({
@@ -53,13 +65,19 @@ const seed = async () => {
       passwordHash,
     })),
   });
-  await prisma.ticket.createMany({
+  const dbTickets = await prisma.ticket.createManyAndReturn({
     data: tickets.map((ticket) => ({
       ...ticket,
       userId: dbUsers[0].id,
     })),
   });
-
+  await prisma.comment.createMany({
+    data: comments.map((comment) => ({
+      ...comment,
+      userId: dbUsers[1].id,
+      ticketId: dbTickets[0].id,
+    })),
+  });
   const t1 = performance.now();
   console.log(`Seeded database in ${t1 - t0} milliseconds`);
 };
