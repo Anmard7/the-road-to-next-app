@@ -1,23 +1,19 @@
 import { CardCompact } from '@/components/card-compact';
 import { getAuth } from '@/features/auth/queries/get-auth';
 import { isOwner } from '@/features/auth/utils/is-owner';
-import { getComments } from '../queries/get-comments';
-import { CommentDeleteButton } from './comment-delete-button';
-import { CommentEditButton } from './comment-edit-button';
-import { CommentEditForm } from './comment-edit-form';
-import { CommentItem } from './comment-item';
+import { CommentWithMetadata } from '../types';
 import { CommentRow } from './comment-row.client';
 import { CommentCreateForm } from './comments-create-form';
 
 type CommentsProps = {
   ticketId: string;
+  comments?: CommentWithMetadata[];
   initialEditCommentId?: string;
 };
 const Comments = async ({
   ticketId,
-  initialEditCommentId = '',
+  comments =[],
 }: CommentsProps) => {
-  const comments = await getComments({ ticketId });
   const { user } = await getAuth();
 
   return (
@@ -33,6 +29,7 @@ const Comments = async ({
             key={comment.id}
             comment={comment}
             canEdit={isOwner(user, comment)}
+
           />
         ))}
       </div>

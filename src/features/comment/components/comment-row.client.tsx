@@ -2,12 +2,12 @@
 'use client';
 import { parseAsString, useQueryState } from 'nuqs';
 import { CommentWithMetadata } from '../types';
+import { CommentDeleteButton } from './comment-delete-button';
 import { CommentEditButton } from './comment-edit-button';
 import { CommentEditForm } from './comment-edit-form';
 import { CommentItem } from './comment-item'; // read-only body
 
 // This client wrapper is to avoid the server re-render when the comment is edited (shallow: true).
-
 
 type CommentRowProps = {
   comment: CommentWithMetadata;
@@ -15,7 +15,7 @@ type CommentRowProps = {
 };
 
 export function CommentRow({ comment, canEdit }: CommentRowProps) {
-  const [editingId, ] = useQueryState(
+  const [editingId] = useQueryState(
     'editComment',
     parseAsString
       .withDefault('')
@@ -36,7 +36,12 @@ export function CommentRow({ comment, canEdit }: CommentRowProps) {
     <CommentItem
       comment={comment}
       buttons={
-        canEdit ? [<CommentEditButton key='edit' commentId={comment.id} />] : []
+        canEdit
+          ? [
+              <CommentEditButton key='edit' commentId={comment.id} />,
+              <CommentDeleteButton key='delete' id={comment.id} />,
+            ]
+          : []
       }
     />
   );

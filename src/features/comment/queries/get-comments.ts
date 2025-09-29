@@ -1,10 +1,8 @@
 import { prisma } from '@/lib/prisma';
 
-type CommentsProps = {
-  ticketId: string;
-};
 
-export const getComments = async ({ ticketId }: CommentsProps) => {
+export const getComments = async ( ticketId : string) => {
+  //await new Promise((resolve) => setTimeout(resolve, 2000));
   return await prisma.comment.findMany({
     where: {
       ticketId,
