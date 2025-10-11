@@ -1,4 +1,11 @@
-import { cloneElement, useActionState, useState } from 'react';
+import {
+  cloneElement,
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,15 +16,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Form } from './form/form';
-import { SubmitButton } from './form/submit-button';
+import { useActionFeedback } from './form/hooks/use-action-feedback';
 import { ActionState, EMPTY_ACTION_STATE } from './form/utils/to-action-state';
+import { Button } from './ui/button';
 
-type UseConfirmDialogArgs = {
+type UseConfirmDialogProps = {
   title?: string;
   description?: string;
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
-  trigger: React.ReactElement<{ onClick?: () => void }>;
+  trigger:
+    | React.ReactElement<{ onClick: () => void }>
+    | ((isPending: boolean) => React.ReactElement<{ onClick: () => void }>);
   onSuccess?: (actionState: ActionState) => void;
 };
 const useConfirmDialog = ({
@@ -26,23 +35,50 @@ const useConfirmDialog = ({
   action,
   trigger,
   onSuccess,
-}: UseConfirmDialogArgs) => {
+}: UseConfirmDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const dialogTrigger = cloneElement(trigger, {
-    onClick: () => setIsOpen((state) => !state),
-  });
-  const [actionState, formAction] = useActionState(action, EMPTY_ACTION_STATE);
+  const [actionState, formAction, isPending] = useActionState(
+    action,
+    EMPTY_ACTION_STATE,
+  );
 
-  const handleSuccess = (actionState: ActionState) => {
-    // Only close dialog on success if there's no redirect
-    // If action redirects, the page will change anyway
-    if (actionState.status === 'SUCCESS') {
+  const dialogTrigger = cloneElement(
+    typeof trigger === 'function' ? trigger(isPending) : trigger,
+    {
+      onClick: () => setIsOpen((state) => !state),
+    },
+  );
+
+  const toastRef = useRef<string | number | null>(null);
+
+  useEffect(() => {
+    if (isPending) {
+      toastRef.current = toast.loading('Deleting...');
       setIsOpen(false);
-      onSuccess?.(actionState);
+    } else if (toastRef.current) {
+      toast.dismiss(toastRef.current);
     }
-  };
+    return () => {
+      if (toastRef.current) {
+        toast.dismiss(toastRef.current);
+      }
+    };
+  }, [isPending]);
 
+  useActionFeedback(actionState, {
+    onSuccess: ({ actionState }) => {
+      if (actionState.message) {
+        toast.success(actionState.message);
+      }
+      onSuccess?.(actionState);
+    },
+    onError: ({ actionState }) => {
+      if (actionState.message) {
+        toast.error(actionState.message);
+      }
+    },
+  });
   const handleError = () => {
     // Keep dialog open on error so user can retry
   };
@@ -56,14 +92,9 @@ const useConfirmDialog = ({
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction asChild>
-            <Form
-              action={formAction}
-              actionState={actionState}
-              onSuccess={handleSuccess}
-              onError={handleError}
-            >
-              <SubmitButton label='Confirm' />
-            </Form>
+            <form action={formAction}>
+              <Button type='submit'>Confirm</Button>
+            </form>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
