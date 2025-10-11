@@ -2,21 +2,21 @@ import { toast } from 'sonner';
 import { useActionFeedback } from './hooks/use-action-feedback';
 import { ActionState } from './utils/to-action-state';
 
-type FormProps = {
+type FormProps<T = unknown> = {
   action: (payload: FormData) => void;
   children: React.ReactNode;
-  actionState: ActionState;
-  onSuccess?: (actionState: ActionState) => void;
+  actionState: ActionState<T>;
+  onSuccess?: (actionState: ActionState<T>) => void;
   onError?: (actionState: ActionState) => void;
 };
 
-const Form = ({
+const Form = <T,>({
   action,
   children,
   actionState,
   onSuccess,
   onError,
-}: FormProps) => {
+}: FormProps<T>) => {
   useActionFeedback(actionState, {
     onSuccess: ({ actionState }) => {
       if (actionState.message) {

@@ -1,24 +1,23 @@
 import { notFound } from 'next/navigation';
-import { SearchParams } from 'nuqs/server';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Separator } from '@/components/ui/separator';
+import { Comments } from '@/features/comment/components/comments';
 import { getComments } from '@/features/comment/queries/get-comments';
 import { TicketItem } from '@/features/ticket/components/ticket-item';
 import { getTicket } from '@/features/ticket/queries/get-ticket';
-import { searchParamsCache } from '@/features/ticket/serach-params'; //includes editComment parser
 import { homePath } from '@/path';
 
 type TicketPageProps = {
-  params: { ticketId: string };
-  searchParams: Promise<SearchParams>;
+  params: Promise<{ ticketId: string }>;
 };
 
-const TicketPage = async ({ params, searchParams }: TicketPageProps) => {
-  const ticketPromise = getTicket(params.ticketId);
-  const commentsPromise = getComments(params.ticketId);
+const TicketPage = async ({ params }: TicketPageProps) => {
+  const { ticketId } = await params;
+  const ticketPromise = getTicket(ticketId);
+  const commentsPromise = getComments(ticketId);
 
   // Parallel execution of the two promises, it's more efficient than waiting for one to finish before starting the other
-  const [ticket, comments] = await Promise.all([
+  const [ticket, paginatedComments] = await Promise.all([
     ticketPromise,
     commentsPromise,
   ]);
@@ -26,7 +25,6 @@ const TicketPage = async ({ params, searchParams }: TicketPageProps) => {
   if (!ticket) {
     notFound();
   }
-  const { editComment } = await searchParamsCache.parse(searchParams);
 
   return (
     <div className='flex flex-1 flex-col gap-y-8'>
@@ -41,8 +39,7 @@ const TicketPage = async ({ params, searchParams }: TicketPageProps) => {
         <TicketItem
           ticket={ticket}
           isDetail
-          comments={comments}
-          initialEditCommentId={editComment}
+          comments={<Comments paginatedComments={paginatedComments} ticketId={ticket.id} />}
         />
       </div>
     </div>

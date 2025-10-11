@@ -13,36 +13,23 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { getAuth } from '@/features/auth/queries/get-auth';
-import { isOwner } from '@/features/auth/utils/is-owner';
-import Comments from '@/features/comment/components/comments';
-import { CommentWithMetadata } from '@/features/comment/types';
-import { Prisma } from '@/generated/prisma/client';
 import { ticketEditPath, ticketPath } from '@/path';
 import { toCurrencyFromCents } from '@/utils/currency';
 import { TICKET_ICON } from '../constants';
+import { TicketWithMetadata } from '../types';
 import { TicketMoreMenu } from './ticket-more-menu';
 
 type TicketItemProps = {
-  ticket: Prisma.TicketGetPayload<{
-    include: {
-      user: { select: { username: true } };
-    };
-  }>;
+  ticket: TicketWithMetadata;
   isDetail?: boolean;
-  comments?: CommentWithMetadata[];
-  initialEditCommentId?: string;
+  comments?: React.ReactNode;
 };
 
-const TicketItem = async ({
+const TicketItem = ({
   ticket,
   isDetail,
   comments,
-  initialEditCommentId,
 }: TicketItemProps) => {
-  const { user } = await getAuth();
-  const isTicketOwner = isOwner(user, ticket);
-
   const detailButton = (
     <Button variant='outline' size='icon' asChild>
       <Link prefetch href={ticketPath(ticket.id)}>
@@ -50,7 +37,7 @@ const TicketItem = async ({
       </Link>
     </Button>
   );
-  const editButton = isTicketOwner ? (
+  const editButton = ticket.isOwner ? (
     <Link
       prefetch
       href={ticketEditPath(ticket.id)}
@@ -60,7 +47,7 @@ const TicketItem = async ({
     </Link>
   ) : null;
 
-  const moreMenu = isTicketOwner ? (
+  const moreMenu = ticket.isOwner ? (
     <TicketMoreMenu
       ticket={ticket}
       trigger={
@@ -115,15 +102,7 @@ const TicketItem = async ({
           )}
         </div>
       </div>
-      {isDetail && (
-       
-          <Comments
-            ticketId={ticket.id}
-            comments={comments}
-            initialEditCommentId={initialEditCommentId ?? ''}
-          />
-
-      )}
+      {comments}
     </div>
   );
 };

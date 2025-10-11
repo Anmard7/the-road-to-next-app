@@ -18,28 +18,36 @@ const createCommentSchema = z.object({
     .max(1024, 'Content cannot exceed 1024 characters'),
 });
 
-export const createComment = async (
+export const createComment = async <T = unknown,>(
   ticketId: string,
-  _actionState: ActionState,
+  _actionState: ActionState<T>,
   formData: FormData,
 ) => {
   const { user } = await getAuthOrRedirect();
 
+  let comment;
+
   try {
     const data = createCommentSchema.parse(Object.fromEntries(formData));
 
-    await prisma.comment.create({
+    comment = await prisma.comment.create({
       data: {
         userId: user.id,
         ticketId: ticketId,
         ...data,
       },
+      include: {
+        user: true,
+      },
     });
   } catch (error) {
-    return fromErrorToActionState(error);
+    return fromErrorToActionState<T>(error);
   }
 
   revalidatePath(ticketPath(ticketId));
 
-  return toActionState('SUCCESS', 'Comment created');
+  return toActionState<T>('SUCCESS', 'Comment created', undefined, {
+    ...comment,
+    isOwner: true,
+  } as T);
 };

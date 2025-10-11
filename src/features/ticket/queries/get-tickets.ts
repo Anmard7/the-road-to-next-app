@@ -1,3 +1,5 @@
+import { getAuth } from '@/features/auth/queries/get-auth';
+import { isOwner } from '@/features/auth/utils/is-owner';
 import { ParsedSearchParams } from '@/features/ticket/serach-params';
 import { prisma } from '@/lib/prisma';
 
@@ -5,6 +7,7 @@ export const getTickets = async (
   userId: string | undefined,
   searchParams: ParsedSearchParams,
 ) => {
+  const { user } = await getAuth();
   const where = {
     userId,
     title: {
@@ -14,7 +17,6 @@ export const getTickets = async (
   };
   const skip = searchParams.page * searchParams.size;
   const take = searchParams.size;
-
 
   const [tickets, count] = await prisma.$transaction([
     prisma.ticket.findMany({
@@ -33,12 +35,15 @@ export const getTickets = async (
       },
     }),
     prisma.ticket.count({
-    where,
-  }),
-]);
+      where,
+    }),
+  ]);
 
   return {
-    list: tickets,
+    list: tickets.map((ticket) => ({
+      ...ticket,
+      isOwner: isOwner(user, ticket),
+    })),
     metadata: { count, hasNextPage: count > skip + take },
   };
 };

@@ -18,12 +18,14 @@ type UseConfirmDialogArgs = {
   description?: string;
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
   trigger: React.ReactElement<{ onClick?: () => void }>;
+  onSuccess?: (actionState: ActionState) => void;
 };
 const useConfirmDialog = ({
   title = 'Are you absolutely sure?',
   description = 'This action cannot be undone. Make sure you understand the consequences.',
   action,
   trigger,
+  onSuccess,
 }: UseConfirmDialogArgs) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -37,6 +39,7 @@ const useConfirmDialog = ({
     // If action redirects, the page will change anyway
     if (actionState.status === 'SUCCESS') {
       setIsOpen(false);
+      onSuccess?.(actionState);
     }
   };
 

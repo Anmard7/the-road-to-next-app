@@ -1,40 +1,68 @@
+'use client';
+
+import { useState } from 'react';
 import { CardCompact } from '@/components/card-compact';
-import { getAuth } from '@/features/auth/queries/get-auth';
-import { isOwner } from '@/features/auth/utils/is-owner';
+import { Button } from '@/components/ui/button';
+import { getComments } from '../queries/get-comments';
 import { CommentWithMetadata } from '../types';
-import { CommentRow } from './comment-row.client';
+import { CommentDeleteButton } from './comment-delete-button';
+import { CommentItem } from './comment-item';
 import { CommentCreateForm } from './comments-create-form';
 
 type CommentsProps = {
   ticketId: string;
-  comments?: CommentWithMetadata[];
-  initialEditCommentId?: string;
+  paginatedComments: {
+    list: CommentWithMetadata[];
+    metadata: { count: number; hasNextPage: boolean };
+  };
 };
-const Comments = async ({
-  ticketId,
-  comments =[],
-}: CommentsProps) => {
-  const { user } = await getAuth();
+const Comments = ({ ticketId, paginatedComments }: CommentsProps) => {
+  const [comments, setComments] = useState(paginatedComments.list);
+  const [metadata, setMetadata] = useState(paginatedComments.metadata);
 
+  const handleMore = async () => {
+    const morePaginatedComments = await getComments(ticketId, comments.length);
+    const moreComments = morePaginatedComments.list;
+    setComments([...comments, ...moreComments]);
+    setMetadata(morePaginatedComments.metadata);
+  };
+
+const handleDeleteComment =(id:string)=>{
+  setComments((prevComments)=>prevComments.filter((comment) => comment.id !== id));
+};
+const handleCreateComment = (comment: CommentWithMetadata | undefined) => {
+  if (!comment) return 
+  setComments((prevComments)=>[comment, ...prevComments]);
+};
   return (
     <>
       <CardCompact
         title='Create Comment'
         description='A new comment will be created for the ticket'
-        content={<CommentCreateForm ticketId={ticketId} />}
+        content={<CommentCreateForm ticketId={ticketId} onCreateComment={handleCreateComment}/>}
       />
       <div className='ml-8 flex flex-col gap-y-2'>
         {comments.map((comment) => (
-          <CommentRow
+          <CommentItem
             key={comment.id}
             comment={comment}
-            canEdit={isOwner(user, comment)}
-
+            buttons={[
+              ...(comment.isOwner
+                ? [<CommentDeleteButton key='0' id={comment.id} onDeleteComment={handleDeleteComment} />]
+                : []),
+            ]}
           />
         ))}
+      </div>
+      <div className='ml-8 flex flex-col justify-center'>
+        {metadata.hasNextPage && (
+          <Button variant='ghost' onClick={handleMore}>
+            More
+          </Button>
+        )}
       </div>
     </>
   );
 };
 
-export default Comments;
+export { Comments };

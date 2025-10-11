@@ -1,10 +1,10 @@
+import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { CommentWithMetadata } from '../types';
 
 type CommentItemProps = {
   comment: CommentWithMetadata;
   buttons?: React.ReactNode[];
-  
 };
 
 const CommentItem = ({ comment, buttons = [] }: CommentItemProps) => {
@@ -13,10 +13,12 @@ const CommentItem = ({ comment, buttons = [] }: CommentItemProps) => {
       <Card className='flex w-full flex-col gap-y-1 p-4'>
         <div className='flex justify-between'>
           <p className='text-muted-foreground text-sm'>
-            {comment.user?.username ?? 'Deleted user'}
+            {comment.isOwner
+              ? 'You'
+              : (comment.user?.username ?? 'Deleted user')}
           </p>
           <p className='text-muted-foreground text-sm'>
-            {comment.createdAt.toLocaleString()}
+            {format(comment.createdAt, 'yyyy-MM-dd HH:mm')}
           </p>
         </div>
         <p className='text-sm whitespace-pre-line'>{comment.content}</p>
