@@ -20,7 +20,7 @@ import { useActionFeedback } from './form/hooks/use-action-feedback';
 import { ActionState, EMPTY_ACTION_STATE } from './form/utils/to-action-state';
 import { Button } from './ui/button';
 
-type UseConfirmDialogProps = {
+type UseConfirmDialogArgs = {
   title?: string;
   description?: string;
   action: (prevState: ActionState, formData: FormData) => Promise<ActionState>;
@@ -35,7 +35,7 @@ const useConfirmDialog = ({
   action,
   trigger,
   onSuccess,
-}: UseConfirmDialogProps) => {
+}: UseConfirmDialogArgs) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const [actionState, formAction, isPending] = useActionState(
@@ -79,9 +79,9 @@ const useConfirmDialog = ({
       }
     },
   });
-  const handleError = () => {
-    // Keep dialog open on error so user can retry
-  };
+  // const handleError = () => {
+  //   // Keep dialog open on error so user can retry
+  // };
   const dialog = (
     <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogContent>

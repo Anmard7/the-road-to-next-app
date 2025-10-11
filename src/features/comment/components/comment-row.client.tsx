@@ -2,7 +2,7 @@
 'use client';
 import { parseAsString, useQueryState } from 'nuqs';
 import { CommentWithMetadata } from '../types';
-import { CommentDeleteButton } from './comment-delete-button';
+//import { CommentDeleteButton } from './comment-delete-button';
 import { CommentEditButton } from './comment-edit-button';
 import { CommentEditForm } from './comment-edit-form';
 import { CommentItem } from './comment-item'; // read-only body
@@ -39,7 +39,7 @@ export function CommentRow({ comment, canEdit }: CommentRowProps) {
         canEdit
           ? [
               <CommentEditButton key='edit' commentId={comment.id} />,
-              <CommentDeleteButton key='delete' id={comment.id} />,
+              //<CommentDeleteButton key='delete' id={comment.id} />,
             ]
           : []
       }
