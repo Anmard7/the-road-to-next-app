@@ -34,17 +34,19 @@ export const getComments = async (
       where,
     }),
   ]);
- 
- //We fetch one more item to check for a next page, so we can know if there is a next page or not.
- //If there is a next page, we remove the extra item from the comments array.
- //We return the comments array without the extra item.
- //We return the last comment in the comments array.
+
+  //We fetch one more item to check for a next page, so we can know if there is a next page or not.
+  //If there is a next page, we remove the extra item from the comments array.
+  //We return the comments array without the extra item.
+  //We return the last comment in the comments array.
   const hasNextPage = comments.length > limit;
-  const commentsWithoutExtraItem = hasNextPage ? comments.slice(0, -1) : comments;
+  const commentsWithoutExtraItem = hasNextPage
+    ? comments.slice(0, -1)
+    : comments;
   const lastComment = commentsWithoutExtraItem.at(-1);
 
   return {
-    list: comments.map((comment) => ({
+    list: commentsWithoutExtraItem.map((comment) => ({
       ...comment,
       isOwner: isOwner(user, comment),
     })),

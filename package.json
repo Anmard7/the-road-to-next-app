@@ -32,6 +32,7 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.13",
+    "@tanstack/react-query": "^5.90.2",
     "big.js": "^7.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -45,6 +46,7 @@
     "react-day-picker": "^9.10.0",
     "react-dom": "19.1.0",
     "react-error-boundary": "^6.0.0",
+    "react-intersection-observer": "^9.16.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "use-debounce": "^10.0.6",
@@ -53,6 +55,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@tanstack/eslint-plugin-query": "^5.91.0",
     "@types/big.js": "^6.2.2",
     "@types/node": "^20",
     "@types/react": "^19",

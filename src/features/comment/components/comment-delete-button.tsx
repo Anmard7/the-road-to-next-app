@@ -9,10 +9,7 @@ type CommentDeleteButtonProps = {
   onDeleteComment: (id: string) => void;
 };
 
-const CommentDeleteButton = ({
-  id,
-  onDeleteComment,
-}: CommentDeleteButtonProps) => {
+const CommentDeleteButton = ({ id, onDeleteComment }: CommentDeleteButtonProps) => {
   const [deleteButton, deleteDialog] = useConfirmDialog({
     title: 'Delete comment',
     action: deleteComment.bind(null, id),
