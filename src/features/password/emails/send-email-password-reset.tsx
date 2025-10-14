@@ -16,5 +16,5 @@ export const sendEmailPasswordReset = async (
   if (error) {
     console.error(error);
   }
-  return data;
+  return { data, error };
 };

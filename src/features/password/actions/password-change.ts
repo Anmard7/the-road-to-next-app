@@ -7,8 +7,8 @@ import {
   toActionState,
 } from '@/components/form/utils/to-action-state';
 import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-redirect';
-import { sendEmailPasswordReset } from '../emails/send-email-password-reset';
-import { generatePasswordResetLink } from '../utils/generate-password-reset-link';
+import { inngest } from '@/lib/inngest';
+import { prisma } from '@/lib/prisma';
 import { verifyPasswordHash } from '../utils/hash-and-verify';
 
 const passwordChangeSchema = z.object({
@@ -28,22 +28,31 @@ export const passwordChange = async (
       Object.fromEntries(formData.entries()),
     );
 
+    const user = await prisma.user.findUnique({
+      where: { email: auth.user.email },
+    });
+
+    if (!user) {
+      //We should never get here
+      // but it's better to be safe than sorry
+      return toActionState('ERROR', 'Invalid request', formData);
+    }
+
     const isValidPassword = await verifyPasswordHash(
-      auth.user.passwordHash,
+      user.passwordHash,
       password,
     );
 
     if (!isValidPassword) {
       return toActionState('ERROR', 'Invalid password', formData);
     }
-    const passwordResetLink = await generatePasswordResetLink(auth.user.id);
-
-    // Send reset email
-    await sendEmailPasswordReset(
-      auth.user.username,
-      auth.user.email,
-      passwordResetLink,
-    );
+    // Send inngest event to the message queue to trigger password change
+    await inngest.send({
+      name: 'app/password.password-reset',
+      data: {
+        userId: user.id,
+      },
+    });
   } catch (error) {
     return fromErrorToActionState(error, formData);
   }

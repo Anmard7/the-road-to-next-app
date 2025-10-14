@@ -8,12 +8,14 @@ import {
   toActionState,
 } from '@/components/form/utils/to-action-state';
 import { setSessionCookie } from '@/features/auth/utils/session-cookie';
+import { sendEmailWelcome } from '@/features/password/emails/send-email-welcome';
 import { hashPassword } from '@/features/password/utils/hash-and-verify';
 import { PrismaClientKnownRequestError } from '@/generated/prisma/runtime/library';
 import { createSession } from '@/lib/lucia';
 import { prisma } from '@/lib/prisma';
-import { ticketsPath } from '@/path';
+import { signInPath, ticketsPath } from '@/path';
 import { generateRandomToken } from '@/utils/crypto';
+import { getbaseUrl } from '@/utils/url';
 
 const signUpSchema = z
   .object({
@@ -65,6 +67,10 @@ export const signUp = async (_actionState: ActionState, formData: FormData) => {
     const sessionToken = generateRandomToken();
     const session = await createSession(sessionToken, user.id);
     await setSessionCookie(sessionToken, session.expiresAt);
+    
+    // Send welcome email
+    const signinUrl = getbaseUrl() + signInPath();
+    await sendEmailWelcome(user.username, user.email, signinUrl);
   } catch (error) {
     if (
       error instanceof PrismaClientKnownRequestError &&
