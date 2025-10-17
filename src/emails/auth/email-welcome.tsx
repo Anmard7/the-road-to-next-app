@@ -5,12 +5,12 @@ import { EmailGreeting } from '../components/email-greeting';
 import { EmailHeader } from '../components/email-header';
 import { EmailLayout } from '../components/email-layout';
 
-type EmailWelcomeProps = {
+type WelcomeEmailProps = {
   toName: string;
   signinUrl: string;
 };
 
-const EmailWelcome = ({ toName, signinUrl }: EmailWelcomeProps) => {
+export const WelcomeEmail = ({ toName, signinUrl }: WelcomeEmailProps) => {
   return (
     <EmailLayout preview="Welcome to TicketBounty! 🎉">
       <EmailHeader appName="TicketBounty" />
@@ -50,9 +50,8 @@ const EmailWelcome = ({ toName, signinUrl }: EmailWelcomeProps) => {
   );
 };
 
-EmailWelcome.PreviewProps = {
+WelcomeEmail.PreviewProps = {
   toName: 'John Doe',
   signinUrl: 'http://localhost:3000/tickets',
-} as EmailWelcomeProps;
+} as WelcomeEmailProps;
 
-export default EmailWelcome;

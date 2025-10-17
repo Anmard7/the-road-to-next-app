@@ -156,3 +156,9 @@
     @apply bg-background text-foreground;
   }
 }
+/* Override ShadcN UI InputOTP's inline styles to prevent input growth when typing */
+[data-slot="input-otp"] {
+  width: 100% !important;
+  clip-path: inset(0 0 0 0) !important;
+  max-width: 100% !important;
+}

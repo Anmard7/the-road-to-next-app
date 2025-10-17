@@ -7,10 +7,12 @@ const users = [
   {
     username: 'admin',
     email: 'admin@admin.com',
+    emailVerified: true,
   },
   {
     username: 'user',
     email: 'anmard@gmail.com',
+    emailVerified: false,
   },
 ];
 

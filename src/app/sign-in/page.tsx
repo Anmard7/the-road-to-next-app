@@ -1,9 +1,15 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { CardCompact } from '@/components/card-compact';
 import { SignInForm } from '@/features/auth/components/sign-in-form';
-import { passwordForgotPath, signUpPath } from '@/path';
+import { getAuth } from '@/features/auth/queries/get-auth';
+import { passwordForgotPath, signUpPath, ticketsPath } from '@/path';
 
-const SignInPage = () => {
+const SignInPage = async () => {
+  const { user } = await getAuth();
+  if (user) {
+    redirect(ticketsPath());
+  }
   return (
     <div className='mx-auto flex w-full max-w-md flex-1 flex-col justify-center'>
       <CardCompact
@@ -12,7 +18,7 @@ const SignInPage = () => {
         description='Sign in to your account'
         content={<SignInForm />}
         footer={
-          <div className='flex-1 flex justify-between'>
+          <div className='flex flex-1 justify-between'>
             <Link href={signUpPath()} className='text-muted-foreground text-sm'>
               No account yet?
             </Link>
@@ -20,7 +26,7 @@ const SignInPage = () => {
               className='text-muted-foreground text-sm'
               href={passwordForgotPath()}
             >
-              Forgot Password?.
+              Forgot Password?
             </Link>
           </div>
         }

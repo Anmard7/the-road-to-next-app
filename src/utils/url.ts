@@ -1,4 +1,4 @@
-export const getbaseUrl = () => {
+export const getBaseUrl = () => {
   const env = process.env.NODE_ENV;
   const baseUrl =
     env === 'development'

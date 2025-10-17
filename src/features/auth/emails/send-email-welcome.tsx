@@ -1,4 +1,4 @@
-import EmailWelcome from '@/emails/auth/email-welcome';
+import { WelcomeEmail } from '@/emails/auth/email-welcome';
 import { resend } from '@/lib/resend';
 
 export const sendEmailWelcome = async (
@@ -10,11 +10,8 @@ export const sendEmailWelcome = async (
     from: 'no-reply@app.veritemp.uk',
     to: email,
     subject: 'Welcome to TicketBounty',
-    react: <EmailWelcome toName={username} signinUrl={signinUrl} />,
+    react: <WelcomeEmail toName={username} signinUrl={signinUrl} />,
   });
-
-  if (error) {
-    console.error(error);
-  }
-  return data;
+  
+  return { data, error };
 };
