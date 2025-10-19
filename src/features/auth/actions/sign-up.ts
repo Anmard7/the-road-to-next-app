@@ -13,7 +13,7 @@ import { PrismaClientKnownRequestError } from '@/generated/prisma/runtime/librar
 import { inngest } from '@/lib/inngest';
 import { createSession } from '@/lib/lucia';
 import { prisma } from '@/lib/prisma';
-import { ticketsPath } from '@/path';
+import { ticketsPath } from '@/paths';
 import { generateRandomToken } from '@/utils/crypto';
 
 const signUpSchema = z
@@ -77,8 +77,6 @@ export const signUp = async (_actionState: ActionState, formData: FormData) => {
     const sessionToken = generateRandomToken();
     const session = await createSession(sessionToken, user.id);
     await setSessionCookie(sessionToken, session.expiresAt);
-
-    
   } catch (error) {
     if (
       error instanceof PrismaClientKnownRequestError &&

@@ -12,7 +12,7 @@ const users = [
   {
     username: 'user',
     email: 'anmard@gmail.com',
-    emailVerified: false,
+    emailVerified: true,
   },
 ];
 
@@ -59,7 +59,16 @@ const seed = async () => {
 
   // With onDelete: Cascade, deleting users will automatically delete their tickets
   await prisma.comment.deleteMany();
+  await prisma.ticket.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.organisation.deleteMany();
+  await prisma.membership.deleteMany();
+
+  const dbOrganisations = await prisma.organisation.create({
+    data: {
+      name: 'Organisation 1',
+    },
+  });
 
   const dbUsers = await prisma.user.createManyAndReturn({
     data: users.map((user) => ({
@@ -67,6 +76,15 @@ const seed = async () => {
       passwordHash,
     })),
   });
+  await prisma.membership.create({
+    data: {
+      // for debugging purposes only one user is added to the organisation
+      userId: dbUsers[0].id,
+      organisationId: dbOrganisations.id,
+      isActive: true,
+    },
+  });
+
   const dbTickets = await prisma.ticket.createManyAndReturn({
     data: tickets.map((ticket) => ({
       ...ticket,

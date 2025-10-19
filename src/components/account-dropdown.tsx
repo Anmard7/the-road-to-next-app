@@ -2,7 +2,7 @@ import { LucideLock, LucideLogOut, LucideUser } from 'lucide-react';
 import Link from 'next/link';
 import { signOut } from '@/features/auth/actions/sign-out';
 import { User } from '@/generated/prisma';
-import { accountPasswordPath, accountProfilePath } from '@/path';
+import { accountPasswordPath, accountProfilePath } from '@/paths';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import {
   DropdownMenu,
@@ -18,7 +18,7 @@ type AccountDropdownProps = {
 };
 
 const AccountDropdown = ({ user }: AccountDropdownProps) => {
-  return(
+  return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild className='cursor-pointer'>
         <Avatar>

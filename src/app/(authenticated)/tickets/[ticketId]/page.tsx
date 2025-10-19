@@ -5,7 +5,7 @@ import { Comments } from '@/features/comment/components/comments';
 import { getComments } from '@/features/comment/queries/get-comments';
 import { TicketItem } from '@/features/ticket/components/ticket-item';
 import { getTicket } from '@/features/ticket/queries/get-ticket';
-import { homePath } from '@/path';
+import { homePath } from '@/paths';
 
 type TicketPageProps = {
   params: Promise<{ ticketId: string }>;
@@ -39,7 +39,12 @@ const TicketPage = async ({ params }: TicketPageProps) => {
         <TicketItem
           ticket={ticket}
           isDetail
-          comments={<Comments paginatedComments={paginatedComments} ticketId={ticket.id} />}
+          comments={
+            <Comments
+              paginatedComments={paginatedComments}
+              ticketId={ticket.id}
+            />
+          }
         />
       </div>
     </div>

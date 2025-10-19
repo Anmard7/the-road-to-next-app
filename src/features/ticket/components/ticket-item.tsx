@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { ticketEditPath, ticketPath } from '@/path';
+import { ticketEditPath, ticketPath } from '@/paths';
 import { toCurrencyFromCents } from '@/utils/currency';
 import { TICKET_ICON } from '../constants';
 import { TicketWithMetadata } from '../types';
@@ -25,11 +25,7 @@ type TicketItemProps = {
   comments?: React.ReactNode;
 };
 
-const TicketItem = ({
-  ticket,
-  isDetail,
-  comments,
-}: TicketItemProps) => {
+const TicketItem = ({ ticket, isDetail, comments }: TicketItemProps) => {
   const detailButton = (
     <Button variant='outline' size='icon' asChild>
       <Link prefetch href={ticketPath(ticket.id)}>

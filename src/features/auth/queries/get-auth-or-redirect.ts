@@ -1,20 +1,61 @@
 import { redirect } from 'next/navigation';
-import { emailVerificationPath, signInPath } from '@/path';
+import { getOrganisationsByUserId } from '@/features/organisation/queries/get-organisations-by-user';
+import {
+  emailVerificationPath,
+  onboardingPath,
+  selectActiveOrganisationPath,
+  signInPath,
+} from '@/paths';
 import { getAuth } from './get-auth';
 
 type getAuthOrRedirectOptions = {
   checkEmailVerified?: boolean;
-}
+  checkOrganisation?: boolean;
+  checkActiveOrganisation?: boolean;
+};
+
+export const getAuthAndRedirect = async () => {
+  const auth = await getAuth();
+
+  if (!auth.user) {
+    redirect(signInPath());
+  }
+
+  return auth;
+};
 
 export const getAuthOrRedirect = async (options?: getAuthOrRedirectOptions) => {
-  const { checkEmailVerified = true } = options ?? {};
+  const {
+    checkEmailVerified = true,
+    checkOrganisation = true,
+    checkActiveOrganisation = true,
+  } = options ?? {};
 
   const auth = await getAuth();
+
   if (!auth.user) {
     redirect(signInPath());
   }
   if (checkEmailVerified && !auth.user.emailVerified) {
     redirect(emailVerificationPath());
   }
+
+  // check organisation and active organisation if needed
+  if (checkOrganisation || checkActiveOrganisation) {
+    const organisations = await getOrganisationsByUserId();
+
+    if (checkOrganisation && !organisations.length) {
+      redirect(onboardingPath());
+    }
+
+    const hasActive = organisations.some(
+      (organisation) => organisation.membershipByUser.isActive,
+    );
+
+    if (checkActiveOrganisation && !hasActive) {
+      redirect(selectActiveOrganisationPath());
+    }
+  }
+
   return auth;
 };

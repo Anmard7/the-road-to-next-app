@@ -11,7 +11,7 @@ import {
 import { setSessionCookie } from '@/features/auth/utils/session-cookie';
 import { createSession } from '@/lib/lucia';
 import { prisma } from '@/lib/prisma';
-import { ticketsPath } from '@/path';
+import { ticketsPath } from '@/paths';
 import { generateRandomToken } from '@/utils/crypto';
 import { getAuthOrRedirect } from '../queries/get-auth-or-redirect';
 import { validateEmailVerificationCode } from '../utils/validate-email-verification-code';
@@ -26,6 +26,8 @@ export const emailVerification = async (
 ) => {
   const { user } = await getAuthOrRedirect({
     checkEmailVerified: false,
+    checkOrganisation: false,
+    checkActiveOrganisation: false,
   });
   try {
     const { code } = emailVerificationSchema.parse(
@@ -39,7 +41,7 @@ export const emailVerification = async (
     if (!validCode) {
       return toActionState('ERROR', 'Invalid or expired code', formData);
     }
-    
+
     // email verification
     await prisma.session.deleteMany({
       where: {

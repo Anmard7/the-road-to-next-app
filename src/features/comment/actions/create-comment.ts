@@ -9,7 +9,7 @@ import {
 } from '@/components/form/utils/to-action-state';
 import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-redirect';
 import { prisma } from '@/lib/prisma';
-import { ticketPath } from '@/path';
+import { ticketPath } from '@/paths';
 
 const createCommentSchema = z.object({
   content: z
@@ -18,7 +18,7 @@ const createCommentSchema = z.object({
     .max(1024, 'Content cannot exceed 1024 characters'),
 });
 
-export const createComment = async <T = unknown,>(
+export const createComment = async <T = unknown>(
   ticketId: string,
   _actionState: ActionState<T>,
   formData: FormData,

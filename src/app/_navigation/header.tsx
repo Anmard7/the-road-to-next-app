@@ -3,7 +3,7 @@
 import { LucideKanban } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/features/auth/hooks/use-auth';
-import { homePath, signInPath, signUpPath } from '@/path';
+import { homePath, signInPath, signUpPath } from '@/paths';
 import { AccountDropdown } from '../../components/account-dropdown';
 import { ThemeSwitcher } from '../../components/theme/theme-switcher';
 import { buttonVariants } from '../../components/ui/button';

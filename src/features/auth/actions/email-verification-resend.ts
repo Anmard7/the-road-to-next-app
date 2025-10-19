@@ -11,6 +11,8 @@ import { generateEmailVerificationCode } from '../utils/generate-email-verificat
 export const emailVerificationResent = async () => {
   const { user } = await getAuthOrRedirect({
     checkEmailVerified: false,
+    checkOrganisation: false,
+    checkActiveOrganisation: false,
   });
   try {
     const verificationCode = await generateEmailVerificationCode(

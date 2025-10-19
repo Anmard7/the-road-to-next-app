@@ -1,5 +1,5 @@
 'use client';
-import clsx from 'clsx';
+
 import { LucideLoaderCircle, LucideProps } from 'lucide-react';
 import { useFormStatus } from 'react-dom';
 import { Button } from '../ui/button';
@@ -12,18 +12,28 @@ type SubmitButtonProps = {
   disabled?: boolean;
 };
 
-const SubmitButton = ({ label, icon, variant, size, disabled }: SubmitButtonProps) => {
+const SubmitButton = ({
+  label,
+  icon,
+  variant,
+  size,
+  disabled,
+}: SubmitButtonProps) => {
   const { pending } = useFormStatus();
 
   return (
-    <Button disabled={pending || disabled} type='submit' variant={variant} size={size}>
-      {pending && (
-        <LucideLoaderCircle
-          className={clsx('size-4 animate-spin', { 'mr-2': !!label })}
-        />
-      )}
+    <Button
+      disabled={pending || disabled}
+      type='submit'
+      variant={variant}
+      size={size}
+    >
+      {pending ? (
+        <LucideLoaderCircle className='size-4 animate-spin' />
+      ) : icon ? (
+        <icon.type {...icon.props} />
+      ) : null}
       {label}
-      {pending ? null : icon}
     </Button>
   );
 };

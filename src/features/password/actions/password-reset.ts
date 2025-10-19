@@ -9,7 +9,7 @@ import {
   toActionState,
 } from '@/components/form/utils/to-action-state';
 import { prisma } from '@/lib/prisma';
-import { signInPath } from '@/path';
+import { signInPath } from '@/paths';
 import { hashToken } from '@/utils/crypto';
 import { hashPassword } from '../utils/hash-and-verify';
 

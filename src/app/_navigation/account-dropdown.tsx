@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { signOut } from '@/features/auth/actions/sign-out';
 import { User } from '@/generated/prisma';
-import { accountPasswordPath, accountProfilePath } from '@/path';
+import { accountPasswordPath, accountProfilePath } from '@/paths';
 
 type AccountDropdownProps = {
   user: User;

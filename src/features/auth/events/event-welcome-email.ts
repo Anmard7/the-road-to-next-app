@@ -1,7 +1,7 @@
 import { sendEmailWelcome } from '@/features/auth/emails/send-email-welcome';
 import { inngest } from '@/lib/inngest';
 import { prisma } from '@/lib/prisma';
-import { signInPath } from '@/path';
+import { signInPath } from '@/paths';
 import { getBaseUrl } from '@/utils/url';
 export const eventWelcomeEmail = inngest.createFunction(
   { id: 'email-welcome' },

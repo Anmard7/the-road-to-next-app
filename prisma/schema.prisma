@@ -15,6 +15,30 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model Organisation {
+  id          String       @id @default(cuid())
+  name        String       @db.VarChar(255)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  memberships Membership[]
+}
+
+model Membership {
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organisationId String
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  joinedAt DateTime @default(now())
+  isActive Boolean @default(false)
+
+  @@id(name: "membershipId", fields: [organisationId, userId])
+  @@index([userId])
+  @@index([organisationId])
+}
+
 model User {
   id                      String                   @id @default(cuid())
   username                String                   @unique
@@ -26,6 +50,7 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   tickets                 Ticket[]
   comments                Comment[]
+  memberships             Membership[]
 }
 
 model EmailVerificationToken {

@@ -10,7 +10,7 @@ import {
 import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-redirect';
 import { isOwner } from '@/features/auth/utils/is-owner';
 import { prisma } from '@/lib/prisma';
-import { ticketPath } from '@/path';
+import { ticketPath } from '@/paths';
 
 const updateCommentSchema = z.object({
   content: z

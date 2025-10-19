@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { CardCompact } from '@/components/card-compact';
 import { SignInForm } from '@/features/auth/components/sign-in-form';
 import { getAuth } from '@/features/auth/queries/get-auth';
-import { passwordForgotPath, signUpPath, ticketsPath } from '@/path';
+import { passwordForgotPath, signUpPath, ticketsPath } from '@/paths';
 
 const SignInPage = async () => {
   const { user } = await getAuth();

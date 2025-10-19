@@ -8,7 +8,7 @@ import {
 import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-redirect';
 import { isOwner } from '@/features/auth/utils/is-owner';
 import { prisma } from '@/lib/prisma';
-import { ticketPath } from '@/path';
+import { ticketPath } from '@/paths';
 
 export const deleteComment = async (id: string) => {
   //await new Promise((resolve) => setTimeout(resolve, 2000));

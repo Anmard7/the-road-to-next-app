@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/use-auth';
 import { cn } from '@/lib/utils';
-import { signInPath, signUpPath, ticketPath } from '@/path';
+import { signInPath, signUpPath, ticketPath } from '@/paths';
 import { getActivePath } from '@/utils/get-active-path';
 import { navItems } from './constants';
 import { SidebarItem } from './sidebar-item';

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { passwordResetPath } from '@/path';
+import { passwordResetPath } from '@/paths';
 import { generateRandomToken, hashToken } from '@/utils/crypto';
 import { getBaseUrl } from '@/utils/url';
 

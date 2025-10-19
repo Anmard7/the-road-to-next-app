@@ -11,7 +11,7 @@ import { setSessionCookie } from '@/features/auth/utils/session-cookie';
 import { verifyPasswordHash } from '@/features/password/utils/hash-and-verify';
 import { createSession } from '@/lib/lucia';
 import { prisma } from '@/lib/prisma';
-import { ticketsPath } from '@/path';
+import { ticketsPath } from '@/paths';
 import { generateRandomToken } from '@/utils/crypto';
 
 const signInSchema = z.object({
