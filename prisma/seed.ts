@@ -76,13 +76,19 @@ const seed = async () => {
       passwordHash,
     })),
   });
-  await prisma.membership.create({
-    data: {
-      // for debugging purposes only one user is added to the organisation
+  await prisma.membership.createMany({
+    data: [{
       userId: dbUsers[0].id,
       organisationId: dbOrganisations.id,
       isActive: true,
+      membershipRole: 'ADMIN',
     },
+    {
+      userId: dbUsers[1].id,
+      organisationId: dbOrganisations.id,
+      isActive: false,
+      membershipRole: 'MEMBER',
+    }],
   });
 
   const dbTickets = await prisma.ticket.createManyAndReturn({

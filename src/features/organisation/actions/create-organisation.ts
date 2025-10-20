@@ -26,7 +26,7 @@ export const createOrganisation = async (
     checkOrganisation: false,
     checkActiveOrganisation: false,
   });
-  
+
   try {
     const data = createOrganisationSchema.parse({
       name: formData.get('name')?.toString(),
@@ -36,7 +36,13 @@ export const createOrganisation = async (
       const organisation = await tx.organisation.create({
         data: {
           ...data,
-          memberships: { create: { userId: user.id, isActive: true } },
+          memberships: {
+            create: {
+              userId: user.id,
+              isActive: true,
+              membershipRole: 'ADMIN',
+            },
+          },
         },
       });
       // deactivate all other memberships for the user
@@ -44,7 +50,7 @@ export const createOrganisation = async (
         where: { userId: user.id, organisationId: { not: organisation.id } },
         data: { isActive: false },
       });
-      });
+    });
   } catch (error) {
     return fromErrorToActionState(error);
   }

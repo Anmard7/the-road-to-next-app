@@ -27,5 +27,5 @@ export const organisationEditPath = (organisationId: string) =>
   `${organisationPath(organisationId)}/edit`;
 export const organisationDeletePath = (organisationId: string) =>
   `${organisationPath(organisationId)}/delete`;
-export const organisationMembersPath = (organisationId: string) =>
-  `${organisationPath(organisationId)}/members`;
+export const membershipsPath = (organisationId: string) =>
+  `${organisationPath(organisationId)}/memberships`;

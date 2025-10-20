@@ -19,7 +19,7 @@ const DataContent = async () => {
   return (
     <>
       <span className='text-muted-foreground text-sm'>
-        Active organisation:{' '}
+        Current organisation:{' '}
         {result.error
           ? 'No Data'
           : result.activeOrganisation

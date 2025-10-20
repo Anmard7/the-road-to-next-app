@@ -33,10 +33,15 @@ model Membership {
 
   joinedAt DateTime @default(now())
   isActive Boolean @default(false)
+  membershipRole MembershipRole @default(MEMBER)
 
   @@id(name: "membershipId", fields: [organisationId, userId])
   @@index([userId])
   @@index([organisationId])
+}
+enum MembershipRole {
+  MEMBER
+  ADMIN
 }
 
 model User {

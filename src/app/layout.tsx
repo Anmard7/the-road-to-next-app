@@ -37,15 +37,15 @@ export default function RootLayout({
         <NuqsAdapter>
           <ThemeProvider>
             <ReactQueryProvider>
-              <Header />
-              <div className='flex h-screen border-collapse overflow-hidden'>
-                <Sidebar />
-                <main className='bg-secondary/20 flex min-h-screen flex-1 flex-col overflow-x-hidden overflow-y-auto px-8 py-24'>
-                  {children}
-                </main>
-              </div>
-              <Footer />
-              <Toaster richColors expand />
+                <Header />
+                <div className='flex h-screen border-collapse overflow-hidden'>
+                  <Sidebar />
+                  <main className='bg-secondary/20 flex min-h-screen flex-1 flex-col overflow-x-hidden overflow-y-auto px-8 py-24'>
+                    {children}
+                  </main>
+                </div>
+                <Footer />
+                <Toaster richColors expand />
             </ReactQueryProvider>
           </ThemeProvider>
         </NuqsAdapter>

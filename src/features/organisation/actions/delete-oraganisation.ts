@@ -4,12 +4,12 @@ import {
   fromErrorToActionState,
   toActionState,
 } from '@/components/form/utils/to-action-state';
-import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-redirect';
+import { getAdminOrRedirect } from '@/features/membership/queries/get-admin-or-redirect';
 import { prisma } from '@/lib/prisma';
 import { getOrganisationsByUserId } from '../queries/get-organisations-by-user';
 
 export const deleteOrganisation = async (organisationId: string) => {
-  await getAuthOrRedirect();
+  await getAdminOrRedirect(organisationId);
   try {
     const organisations = await getOrganisationsByUserId();
     const canDelete = organisations.some(

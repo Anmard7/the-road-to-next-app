@@ -21,7 +21,7 @@ const SelectActiveOrganisationPage = async () => {
     <div className='flex flex-1 flex-col gap-y-8'>
       <Heading
         title='Select Organisation'
-        description='Pick one organisation you want to work with'
+        description='Pick one organisation you want to work with or create a new one'
         actions={
           <>
             <Button asChild>
