@@ -1,6 +1,7 @@
 import {
   createParser,
   createSearchParamsCache,
+  parseAsBoolean,
   parseAsInteger,
   parseAsString,
 } from 'nuqs/server';
@@ -44,14 +45,22 @@ export const paginationOptions = {
   clearOnDefault: true,
 };
 export const editCommentParser = parseAsString.withDefault('').withOptions({
-  shallow: true,         // client-only updates for inline form (no RSC refetch)
+  shallow: true, // client-only updates for inline form (no RSC refetch)
   clearOnDefault: true,
 });
+
+export const myTicketsFilterParser = parseAsBoolean
+  .withOptions({
+    shallow: false,
+    clearOnDefault: true,
+  })
+  .withDefault(false);
 
 export const searchParamsCache = createSearchParamsCache({
   search: searchParser,
   ...sortParser,
   ...paginationParser,
+  myTicketsFilter: myTicketsFilterParser,
   editComment: editCommentParser,
 });
 

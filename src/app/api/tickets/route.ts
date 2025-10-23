@@ -12,7 +12,7 @@ export const GET = async (request: NextRequest) => {
     // typed search params 
     const searchParams = searchParamsCache.parse(rawSearchParams);
 
-    const { list, metadata } = await getTickets(undefined, searchParams);
+    const { list, metadata } = await getTickets(undefined, false, searchParams);
 
     return Response.json({ list, metadata });
   } catch (error) {

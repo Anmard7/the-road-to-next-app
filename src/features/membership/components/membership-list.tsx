@@ -17,6 +17,7 @@ import {
 import { getMemberships } from '../queries/get-memberships';
 import { MembershipDeleteButton } from './membership-delete-button';
 import { MembershipMoreMenu } from './membership-more-menu';
+import { PermissionToggle } from './permission-toggle';
 
 type MembershipsListProps = {
   organisationId: string;
@@ -38,6 +39,8 @@ export const MembershipsList = async ({
           <TableHead>Joined At</TableHead>
           <TableHead>Verified Email</TableHead>
           <TableHead>Role</TableHead>
+          <TableHead>Can Delete Ticket?</TableHead>
+          <TableHead>Can Update Ticket?</TableHead>
           <TableHead />
         </TableRow>
       </TableHeader>
@@ -108,6 +111,22 @@ export const MembershipsList = async ({
                 )}
               </TableCell>
               <TableCell>{membership.membershipRole}</TableCell>
+              <TableCell>
+                <PermissionToggle
+                  userId={membership.userId}
+                  organisationId={membership.organisationId}
+                  permissionKey='canDeleteTicket'
+                  permissionValue={membership.canDeleteTicket}
+                />
+              </TableCell>
+              <TableCell>
+                <PermissionToggle
+                  userId={membership.userId}
+                  organisationId={membership.organisationId}
+                  permissionKey='canUpdateTicket'
+                  permissionValue={membership.canUpdateTicket}
+                />
+              </TableCell>
               <TableCell className='flex justify-end gap-x-2'>
                 {buttons}
               </TableCell>

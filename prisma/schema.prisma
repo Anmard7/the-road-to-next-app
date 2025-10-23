@@ -21,6 +21,7 @@ model Organisation {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   memberships Membership[]
+  tickets     Ticket[]
 }
 
 model Membership {
@@ -31,14 +32,19 @@ model Membership {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  joinedAt DateTime @default(now())
-  isActive Boolean @default(false)
+  joinedAt       DateTime       @default(now())
+  isActive       Boolean        @default(false)
   membershipRole MembershipRole @default(MEMBER)
+
+  //permissions
+  canDeleteTicket Boolean @default(true)
+  canUpdateTicket  Boolean @default(true)
 
   @@id(name: "membershipId", fields: [organisationId, userId])
   @@index([userId])
   @@index([organisationId])
 }
+
 enum MembershipRole {
   MEMBER
   ADMIN
@@ -88,19 +94,22 @@ model Session {
 }
 
 model Ticket {
-  id        String       @id @default(cuid())
-  title     String       @db.VarChar(255)
-  content   String       @db.VarChar(1024)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  status    TicketStatus @default(OPEN)
-  deadline  String
-  bounty    Int
-  userId    String
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  comments  Comment[]
+  id             String       @id @default(cuid())
+  title          String       @db.VarChar(255)
+  content        String       @db.VarChar(1024)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  status         TicketStatus @default(OPEN)
+  deadline       String
+  bounty         Int
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments       Comment[]
+  organisationId String
+  organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([organisationId])
 }
 
 model Comment {

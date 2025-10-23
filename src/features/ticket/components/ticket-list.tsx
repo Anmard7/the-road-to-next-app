@@ -8,11 +8,17 @@ import { TicketSortSelect } from './ticket-sort-select';
 
 type TicketListProps = {
   userId?: string;
+  byOrganisation?: boolean;
   searchParams: ParsedSearchParams;
 };
-const TicketList = async ({ userId, searchParams }: TicketListProps) => {
+const TicketList = async ({
+  userId,
+  byOrganisation = false,
+  searchParams,
+}: TicketListProps) => {
   const { list: tickets, metadata: ticketMetadata } = await getTickets(
     userId,
+    byOrganisation,
     searchParams,
   );
 

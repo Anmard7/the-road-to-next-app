@@ -11,13 +11,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Ticket, TicketStatus } from '@/generated/prisma';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { TicketStatus } from '@/generated/prisma';
 import { deleteTicket } from '../actions/delete-ticket';
 import { updateTicketStatus } from '../actions/update-ticket-status';
 import { TICKET_STATUS_LABELS } from '../constants';
+import { TicketWithMetadata } from '../types';
 
 type TicketMoreMenuProps = {
-  ticket: Ticket;
+  ticket: TicketWithMetadata;
   trigger: React.ReactElement;
 };
 
@@ -31,7 +37,26 @@ export const TicketMoreMenu = ({ ticket, trigger }: TicketMoreMenuProps) => {
       </DropdownMenuItem>
     ),
   });
-
+  const deleteButtonWithTooltip = ticket.permissions.canDeleteTicket ? (
+    deleteButton
+  ) : (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <DropdownMenuItem className='opacity-50'>
+          <LucideTrash className='h-4 w-4' />
+          <span>Delete</span>
+        </DropdownMenuItem>
+      </TooltipTrigger>
+      <TooltipContent
+        // variant={'secondary'}
+        //intent={'secondaryArrow'}
+        //className='bg-secondary text-secondary-foreground'
+        side={'bottom'}
+      >
+        <span>Insufficient permissions</span>
+      </TooltipContent>
+    </Tooltip>
+  );
   const handleUpdateTicketStatus = async (value: string) => {
     const promise = updateTicketStatus(ticket.id, value as TicketStatus);
     toast.promise(promise, {
@@ -66,7 +91,7 @@ export const TicketMoreMenu = ({ ticket, trigger }: TicketMoreMenuProps) => {
         <DropdownMenuContent className='w-56' side='right'>
           {ticketStatusRadioGroupItems}
           <DropdownMenuSeparator />
-          {deleteButton}
+          {deleteButtonWithTooltip}
         </DropdownMenuContent>
       </DropdownMenu>
     </>
