@@ -125,8 +125,8 @@ const seed = async () => {
   await prisma.comment.createMany({
     data: comments.map((comment) => ({
       ...comment,
-      userId: dbUsers[1].id,
       ticketId: dbTickets[0].id,
+      userId: dbUsers[1].id,
     })),
   });
 

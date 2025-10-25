@@ -9,6 +9,7 @@ export const signUpPath = () => '/sign-up';
 export const signInPath = () => '/sign-in';
 
 export const emailVerificationPath = () => '/email-verification';
+export const emailInvitationPath = () => '/email-invitation/';
 
 export const passwordForgotPath = () => '/password-forgot';
 export const passwordResetPath = () => '/password-reset';
@@ -30,3 +31,5 @@ export const organisationDeletePath = (organisationId: string) =>
   `${organisationPath(organisationId)}/delete`;
 export const membershipsPath = (organisationId: string) =>
   `${organisationPath(organisationId)}/memberships`;
+export const invitationsPath = (organisationId: string) =>
+  `${organisationPath(organisationId)}/invitations`;

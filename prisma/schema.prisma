@@ -22,6 +22,28 @@ model Organisation {
   updatedAt   DateTime     @updatedAt
   memberships Membership[]
   tickets     Ticket[]
+  invitations Invitation[]
+}
+
+model Invitation {
+  email           String
+  tokenHash       String           @unique
+  organisationId  String
+  organisation    Organisation     @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  invitedByUserId String?
+  invitedByUser   User?            @relation(fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  status          InvitationStatus @default(PENDING)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@id(name: "invitationId", fields: [organisationId,email])
+  @@index([organisationId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED_WITH_ACCOUNT
+  ACCEPTED_WITHOUT_ACCOUNT
 }
 
 model Membership {
@@ -38,7 +60,7 @@ model Membership {
 
   //permissions
   canDeleteTicket Boolean @default(true)
-  canUpdateTicket  Boolean @default(true)
+  canUpdateTicket Boolean @default(true)
 
   @@id(name: "membershipId", fields: [organisationId, userId])
   @@index([userId])
@@ -62,6 +84,7 @@ model User {
   tickets                 Ticket[]
   comments                Comment[]
   memberships             Membership[]
+  invitesbyUser           Invitation[]
 }
 
 model EmailVerificationToken {

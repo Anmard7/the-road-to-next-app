@@ -1,33 +1,33 @@
 import { Suspense } from 'react';
 import { Heading } from '@/components/heading';
 import { Spinner } from '@/components/spinner';
-import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-redirect';
 import { InvitationCreateButton } from '@/features/invitations/components/invitation-create-button';
-import { MembershipsList } from '@/features/membership/components/membership-list';
+import { InvitationList } from '@/features/invitations/components/invitation-list';
 import { OrganisationBreadcrumbs } from '../_navigation/tabs';
-type MembershipsPageProps = {
-  params: Promise<{ organisationId: string }>;
+
+type InvitationsPageProps = {
+  params: Promise<{
+    organisationId: string;
+  }>;
 };
 
-const MembershipsPage = async ({ params }: MembershipsPageProps) => {
+const InvitationsPage = async ({ params }: InvitationsPageProps) => {
   const { organisationId } = await params;
-  const { user } = await getAuthOrRedirect();
+
   return (
     <div className='flex flex-1 flex-col gap-y-8'>
       <Heading
-        title='Memberships'
-        description='Manage members of your organisation'
+        title='Invitations'
+        description="Manages your organization's invitations"
         tabs={<OrganisationBreadcrumbs />}
         actions={<InvitationCreateButton organisationId={organisationId} />}
       />
+
       <Suspense fallback={<Spinner />}>
-        <MembershipsList
-          organisationId={organisationId}
-          currentUserId={user.id}
-        />
+        <InvitationList organisationId={organisationId} />
       </Suspense>
     </div>
   );
 };
 
-export default MembershipsPage;
+export default InvitationsPage;

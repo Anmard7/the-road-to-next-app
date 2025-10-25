@@ -3,6 +3,12 @@ import { inngest } from '@/lib/inngest';
 import { prisma } from '@/lib/prisma';
 import { signInPath } from '@/paths';
 import { getBaseUrl } from '@/utils/url';
+
+export type WelcomeEmailEventArgs = {
+  data: {
+    userId: string;
+  };
+};
 export const eventWelcomeEmail = inngest.createFunction(
   { id: 'email-welcome' },
   // Fan-out: listen to the shared sign-up event so this job

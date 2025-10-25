@@ -63,14 +63,14 @@ export const signUp = async (_actionState: ActionState, formData: FormData) => {
         passwordHash,
       },
     });
-
-    // create email verification code and send it to message queue
-    // Fan-out pattern: Other jobs (e.g., welcome email) also listen to
+    // send jobs to message queue
+    // Fan-out pattern: eventWelcomeEmail,eventEmailVerification, eventHandleInvitationsOnSignUp listen to
     // 'app/auth.sign-up', so no need to emit separate events for them.
     await inngest.send({
       name: 'app/auth.sign-up',
       data: {
         userId: user.id,
+        
       },
     });
 
