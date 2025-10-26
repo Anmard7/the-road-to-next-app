@@ -8,7 +8,7 @@
 
 ## Implementation Steps
 
-### 1. Update Database Schema
+### 1. Update Database Schema ✅
 
 **File:** `prisma/schema.prisma` (line 139, Attachment model)
 
@@ -25,7 +25,7 @@ After schema changes:
 - Run `prisma generate` to regenerate client
 - Run `prisma migrate dev` to create and apply migration
 
-### 2. Create Presigned URL Generation Server Action
+### 2. Create Presigned URL Generation Server Action ✅
 
 **File:** `src/features/attachment/actions/generate-upload-url.ts`
 
@@ -46,7 +46,7 @@ Implementation details:
 - Expiration: 60 seconds
 - Return: `{ url: string, headers: Record<string, string>, key: string, attachmentId: string }`
 
-### 3. Create Upload Confirmation Server Action
+### 3. Create Upload Confirmation Server Action ✅
 
 **File:** `src/features/attachment/actions/confirm-upload.ts`
 
@@ -64,7 +64,7 @@ Implementation details:
 - Return success/error state
 - Handle errors: file not found, metadata mismatch, unauthorized
 
-### 4. Add AWS SDK Helper
+### 4. Add AWS SDK Helper ✅
 
 **File:** `src/lib/aws.ts`
 
@@ -82,7 +82,7 @@ Add `getPresignedPutUrl` function:
 - Return `{ url: string, headers: Record<string, string> }`
 - Include proper TypeScript typing and error handling
 
-### 5. Create Custom Hook for Direct Upload
+### 5. Create Custom Hook for Direct Upload ✅
 
 **File:** `src/features/attachment/hooks/use-direct-upload.ts`
 
@@ -112,7 +112,7 @@ Functions to expose:
 
 Return: `{ files, uploadFiles, retryFile, cancelFile, clearAll, isUploading }`
 
-### 6. Refactor Client Upload Component
+### 6. Refactor Client Upload Component ✅
 
 **File:** `src/features/attachment/components/attachment-create-form.tsx`
 
@@ -134,7 +134,7 @@ Major changes:
 - Retry functionality for failed files
 - Call `revalidatePath` after all uploads complete (via server action or in confirm action)
 
-### 7. Update Cleanup Job
+### 7. Update Cleanup Job ✅
 
 **File:** `src/features/attachment/events/event-cleanup-orphaned-files.ts`
 
@@ -146,7 +146,19 @@ Add second cleanup pass for pending attachments:
 - Delete from S3 using `DeleteObjectCommand` (ignore errors if not found)
 - Delete attachment record from database
 - Log cleanup metrics: number of pending attachments cleaned
-- Run this pass before or after the existing orphaned file cleanup
+ - Run this pass before the existing orphaned file cleanup
+
+### 8. File Name Safety ✅
+
+**File:** `src/features/attachment/utils/generate-s3-key.ts`
+
+- `generateS3Key` now sanitizes `fileName` (strip control chars and path separators, preserve/normalize extension, replace unsafe chars, limit base to 100 chars).
+
+### 9. Query Adjustments ✅
+
+**File:** `src/features/attachment/queries/get-attachments.ts`
+
+- List only `status = 'CONFIRMED'` for user display; order by `createdAt desc`.
 
 ## Key Benefits
 
@@ -164,6 +176,9 @@ Add second cleanup pass for pending attachments:
 - Confirmation step verifies actual upload before marking as complete
 - Failed uploads are cleaned up by background job
 
+- S3 CORS: Required for browser PUT. Configure AllowedOrigins (dev/prod), AllowedMethods (PUT,GET,HEAD), AllowedHeaders (* or at least `Content-Type`, `x-amz-server-side-encryption`), ExposeHeaders (`ETag`).
+- SSE-S3: Presigner sets `ServerSideEncryption: 'AES256'`; client sends `x-amz-server-side-encryption`.
+
 ## Edge Cases Handled
 
 - User closes browser mid-upload → Cleanup job removes pending records
@@ -173,10 +188,17 @@ Add second cleanup pass for pending attachments:
 
 ### To-dos
 
-- [ ] Create server action to generate presigned upload URLs with permission checks and metadata validation
-- [ ] Create server action to confirm successful uploads by verifying S3 object existence
-- [ ] Add status field (PENDING/CONFIRMED) to Attachment model in Prisma schema
-- [ ] Create custom hook to handle direct S3 upload with progress tracking
-- [ ] Refactor AttachmentCreateForm to use presigned URLs and direct uploads
-- [ ] Modify cleanup event to remove expired pending attachments
+- [x] Create server action to generate presigned upload URLs with permission checks and metadata validation
+- [x] Create server action to confirm successful uploads by verifying S3 object existence
+- [x] Add status field (PENDING/CONFIRMED) and etag/contentType/size to Attachment model in Prisma schema
+- [x] Create custom hook to handle direct S3 upload with progress tracking
+- [x] Refactor AttachmentCreateForm to use presigned URLs and direct uploads
+- [x] Modify cleanup event to remove expired pending attachments
+- [x] Sanitize file names in `generateS3Key`
+- [x] Filter `getAttachments` to only show CONFIRMED
+- [ ] Configure S3 CORS (PUT/GET/HEAD, headers, expose ETag) for dev/prod origins
+- [ ] Add/verify bucket policies: block public access, require TLS, require SSE-S3
+- [ ] Harden NotFound handling in confirm (check `$metadata.httpStatusCode === 404`)
+- [ ] Optionally require `status = CONFIRMED` (and ownership) before issuing download
+- [ ] Decide fate of legacy server-side upload (`create-attachments.ts`): remove or keep as fallback
 - [ ] Test complete upload flow including error cases and cleanup

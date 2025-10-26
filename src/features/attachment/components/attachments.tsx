@@ -2,7 +2,7 @@ import { CardCompact } from '@/components/card-compact';
 import { getAttachments } from '../queries/get-attachments';
 import { AttachmentCreateForm } from './attachment-create-form';
 import { AttachmentDeleteButton } from './attachment-delete-button';
-import { AttachmentItem } from './attachment-item';
+import { AttachmentList } from './attachment-list';
 
 type AttachmentsProps = {
   ticketId: string;
@@ -18,24 +18,20 @@ const Attachments = async ({ ticketId, isOwner }: AttachmentsProps) => {
       content={
         <>
           {/* list of attachments */}
-          <div className='mx-2 mb-4 flex flex-col gap-y-2'>
-            {attachments.map((attachment) => (
-              <AttachmentItem
-                key={attachment.id}
-                attachment={attachment}
-                buttons={[
-                  ...(isOwner
-                    ? [
-                        <AttachmentDeleteButton
-                          key={attachment.id}
-                          id={attachment.id}
-                        />,
-                      ]
-                    : []),
-                ]}
-              />
-            ))}
-          </div>
+          <AttachmentList
+            attachments={attachments}
+            //passing a function to generate buttons instead of passing the buttons directly as a prop because the buttons are dependent on the attachmentId
+            buttons={(attachmentId: string) => [
+              ...(isOwner
+                ? [
+                    <AttachmentDeleteButton
+                      key="0"
+                      id={attachmentId}
+                    />,
+                  ]
+                : []),
+            ]}
+          />
 
           {/* create attachment form */}
           {isOwner && <AttachmentCreateForm ticketId={ticketId} />}
