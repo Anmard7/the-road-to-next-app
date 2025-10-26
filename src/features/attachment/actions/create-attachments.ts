@@ -18,6 +18,8 @@ import { ACCEPTED, MAX_SIZE } from '../constants';
 import { generateS3Key } from '../utils/generate-s3-key';
 import { sizeInMB } from '../utils/size';
 
+// Legacy code - it's not referenced by the form anymore - either keep as fallback or remove to avoid confusion.
+
 const createAttachmentsSchema = z.object({
   files: z
     .custom<FileList>()

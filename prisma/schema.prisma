@@ -137,12 +137,16 @@ model Ticket {
 }
 
 model Attachment {
-  id        String   @id @default(cuid())
-  name      String   @db.VarChar(255)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  id          String           @id @default(cuid())
+  name        String           @db.VarChar(255)
+  status      AttachmentStatus @default(PENDING)
+  etag        String?
+  contentType String?
+  size        Int?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  ticketId    String
+  ticket      Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
 }
@@ -165,4 +169,9 @@ enum TicketStatus {
   DONE
   OPEN
   IN_PROGRESS
+}
+
+enum AttachmentStatus {
+  PENDING
+  CONFIRMED
 }

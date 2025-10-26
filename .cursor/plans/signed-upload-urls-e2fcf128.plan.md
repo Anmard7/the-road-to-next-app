@@ -8,82 +8,145 @@
 
 ## Implementation Steps
 
-### 1. Create Presigned URL Generation Server Action
+### 1. Update Database Schema
+
+**File:** `prisma/schema.prisma` (line 139, Attachment model)
+
+Add to the Attachment model:
+
+- Create enum `AttachmentStatus { PENDING, CONFIRMED }`
+- Add `status AttachmentStatus @default(PENDING)` field
+- Add `etag String?` field to store S3 ETag for verification
+- Add `contentType String?` field to store MIME type
+- Add `size Int?` field to store file size in bytes
+
+After schema changes:
+
+- Run `prisma generate` to regenerate client
+- Run `prisma migrate dev` to create and apply migration
+
+### 2. Create Presigned URL Generation Server Action
 
 **File:** `src/features/attachment/actions/generate-upload-url.ts`
 
-Create a new server action that:
+Implementation details:
 
-- Validates user permissions (same checks as current `createAttachments`)
-- Accepts file metadata (name, size, type) without the actual file
-- Validates file metadata against `ACCEPTED` types and `MAX_SIZE`
-- Generates a unique S3 key using existing `generateS3Key` utility
-- Creates a "pending" attachment record in the database
-- Uses `getSignedUrl` from `@aws-sdk/s3-request-presigner` with `PutObjectCommand`
-- Returns: `{ uploadUrl, attachmentId, key }` with 60-second expiration
+- Accept `ticketId` and file metadata: `{ name: string, size: number, type: string }`
+- Validate user authentication via `getAuthOrRedirect()`
+- Fetch ticket and verify user is owner (same checks as `createAttachments`)
+- Validate file metadata:
+- Check `type` is in `ACCEPTED` array
+- Check `sizeInMB(size) <= MAX_SIZE`
+- Create attachment record with `status: 'PENDING'`, store `name`, `contentType`, `size`
+- Generate S3 key using `generateS3Key({ organisationId, ticketId, fileName, attachmentId })`
+- Use `getPresignedPutUrl()` helper with:
+- `Key`: generated key
+- `ContentType`: file type
+- `ServerSideEncryption`: 'AES256' (optional but recommended)
+- Expiration: 60 seconds
+- Return: `{ url: string, headers: Record<string, string>, key: string, attachmentId: string }`
 
-### 2. Create Upload Confirmation Server Action
+### 3. Create Upload Confirmation Server Action
 
 **File:** `src/features/attachment/actions/confirm-upload.ts`
 
-Create a new server action that:
+Implementation details:
 
-- Receives `attachmentId` from the client
-- Verifies the file exists in S3 using `HeadObjectCommand`
-- Updates the attachment status from "pending" to "confirmed" in the database
-- Includes error handling for failed/expired uploads
+- Accept `attachmentId: string`
+- Validate user authentication
+- Fetch attachment with ticket relation
+- Verify user is ticket owner (authorization check)
+- Use `HeadObjectCommand` to verify S3 object exists
+- Validate S3 metadata matches attachment record:
+- Check `ContentLength` matches stored size
+- Check `ContentType` matches stored contentType
+- Update attachment: set `status: 'CONFIRMED'`, store `etag` from S3 response
+- Return success/error state
+- Handle errors: file not found, metadata mismatch, unauthorized
 
-### 3. Update Database Schema
+### 4. Add AWS SDK Helper
 
-**File:** `prisma/schema.prisma`
+**File:** `src/lib/aws.ts`
 
-Add a `status` field to the `Attachment` model:
+Add `getPresignedPutUrl` function:
 
-- `status` enum: `PENDING | CONFIRMED`
-- Default to `PENDING`
-- This allows tracking of incomplete uploads
-
-### 4. Update Client Upload Component
-
-**File:** `src/features/attachment/components/attachment-create-form.tsx`
-
-Transform the form to:
-
-1. When files are selected, immediately request presigned URLs (one per file)
-2. Upload each file directly to S3 using `fetch()` PUT request
-3. Show upload progress for each file (using `XMLHttpRequest` or upload progress API)
-4. After each successful S3 upload, call confirmation action
-5. Handle failures gracefully (show which files failed, allow retry)
+- Import `getSignedUrl` from `@aws-sdk/s3-request-presigner`
+- Import `PutObjectCommand` from `@aws-sdk/client-s3`
+- Accept typed parameters: `{ key: string, contentType: string, expiresIn?: number }`
+- Create `PutObjectCommand` with:
+- `Bucket: process.env.AWS_BUCKET_NAME`
+- `Key: key`
+- `ContentType: contentType`
+- `ServerSideEncryption: 'AES256'`
+- Generate presigned URL with `expiresIn` (default 60 seconds)
+- Return `{ url: string, headers: Record<string, string> }`
+- Include proper TypeScript typing and error handling
 
 ### 5. Create Custom Hook for Direct Upload
 
 **File:** `src/features/attachment/hooks/use-direct-upload.ts`
 
-Encapsulate the upload logic:
+Hook signature: `useDirectUpload(ticketId: string)`
 
-- Request presigned URL
-- Upload to S3 with progress tracking
-- Confirm upload with server
-- Return upload state (loading, progress, error, success)
+State management:
 
-### 6. Add AWS SDK Configuration Helper
+- Track per-file state: `{ id, name, progress, status, error, attachmentId }`
+- Status enum: `'idle' | 'requesting-url' | 'uploading' | 'confirming' | 'success' | 'error'`
 
-**File:** `src/lib/aws.ts`
+Functions to expose:
 
-Export a `getPresignedUrl` helper function that wraps the AWS SDK's presigning logic with proper typing and error handling.
+- `uploadFiles(files: File[])`: Main upload orchestrator
+- For each file:
 
-### 7. Update Cleanup Logic
+1. Set status to 'requesting-url'
+2. Call `generateUploadUrl` action with file metadata
+3. Set status to 'uploading'
+4. PUT file to S3 using `XMLHttpRequest` for progress tracking
+5. Set status to 'confirming'
+6. Call `confirmUpload` action with attachmentId
+7. Set status to 'success' or 'error'
 
-**Files:** `src/features/attachment/events/event-cleanup-orphaned-files.ts`
+- `retryFile(fileId: string)`: Retry failed upload
+- `cancelFile(fileId: string)`: Cancel in-progress upload
+- `clearAll()`: Reset state
 
-Modify the cleanup job to:
+Return: `{ files, uploadFiles, retryFile, cancelFile, clearAll, isUploading }`
 
-- Delete "pending" attachments older than 1 hour (expired uploads)
-- Delete their associated S3 objects
+### 6. Refactor Client Upload Component
 
-### 8. Add Environment Variable Documentation
+**File:** `src/features/attachment/components/attachment-create-form.tsx`
 
-Update `enviroment.d.ts` if needed (already has AWS vars, should be sufficient).
+Major changes:
+
+- Remove `useActionState` and server action form submission
+- Use `useDirectUpload` hook instead
+- Keep `useFilePreview` for initial file selection and validation
+- When files are selected and validated:
+- Call `uploadFiles()` from hook immediately
+- Show progress bar for each file (0-100%)
+- Display status icons: pending, uploading, success, error
+- Show retry button for failed uploads
+- Remove `<Form>` wrapper, use standard form or div
+- Update UI to show:
+- Per-file upload progress
+- Overall upload status
+- Individual file success/error states
+- Retry functionality for failed files
+- Call `revalidatePath` after all uploads complete (via server action or in confirm action)
+
+### 7. Update Cleanup Job
+
+**File:** `src/features/attachment/events/event-cleanup-orphaned-files.ts`
+
+Add second cleanup pass for pending attachments:
+
+- Query attachments with `status: 'PENDING'` and `createdAt < (now - 1 hour)`
+- For each pending attachment:
+- Compute S3 key using `generateS3Key`
+- Delete from S3 using `DeleteObjectCommand` (ignore errors if not found)
+- Delete attachment record from database
+- Log cleanup metrics: number of pending attachments cleaned
+- Run this pass before or after the existing orphaned file cleanup
 
 ## Key Benefits
 
