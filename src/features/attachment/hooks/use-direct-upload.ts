@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { confirmUpload } from '../actions/confirm-upload';
 import { generateUploadUrl } from '../actions/generate-upload-url';
 
@@ -34,7 +34,7 @@ interface UseDirectUploadReturn {
 export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const xhrMap = new Map<string, XMLHttpRequest>();
+  const xhrMapRef = useRef<Map<string, XMLHttpRequest>>(new Map());
 
   const generateFileId = (file: File) => {
     return `${file.name}-${file.size}-${Date.now()}`;
@@ -49,7 +49,7 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
     [],
   );
 
-  const uploadFileToS3 = (
+  const uploadFileToS3 = useCallback((
     fileId: string,
     file: File,
     presignedUrl: string,
@@ -57,7 +57,7 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
   ): Promise<void> => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhrMap.set(fileId, xhr);
+      xhrMapRef.current.set(fileId, xhr);
 
       // Track upload progress
       xhr.upload.addEventListener('progress', (e) => {
@@ -94,7 +94,7 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
       });
       xhr.send(file);
     });
-  };
+  }, [updateFileStatus]);
 
   const uploadFiles = useCallback(
     async (filesToUpload: File[]) => {
@@ -170,13 +170,13 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
             error: errorMessage,
           });
         } finally {
-          xhrMap.delete(uploadFile.id);
+          xhrMapRef.current.delete(uploadFile.id);
         }
       }
 
       setIsUploading(false);
     },
-    [ticketId, updateFileStatus],
+    [ticketId, updateFileStatus, uploadFileToS3],
   );
 
   const retryFile = useCallback(
@@ -247,20 +247,20 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
           error: errorMessage,
         });
       } finally {
-        xhrMap.delete(fileId);
+        xhrMapRef.current.delete(fileId);
         setIsUploading(false);
       }
     },
-    [files, ticketId, updateFileStatus],
+    [files, ticketId, updateFileStatus, uploadFileToS3],
   );
 
   const cancelFile = useCallback(
     (fileId: string) => {
-      const xhr = xhrMap.get(fileId);
+      const xhr = xhrMapRef.current.get(fileId);
       if (xhr && xhr.readyState !== XMLHttpRequest.DONE) {
         xhr.abort();
       }
-      xhrMap.delete(fileId);
+      xhrMapRef.current.delete(fileId);
       updateFileStatus(fileId, { status: 'error', error: 'Upload cancelled' });
     },
     [updateFileStatus],
@@ -268,12 +268,12 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
 
   const clearAll = useCallback(() => {
     // Abort all pending uploads
-    for (const xhr of xhrMap.values()) {
+    for (const xhr of xhrMapRef.current.values()) {
       if (xhr.readyState !== XMLHttpRequest.DONE) {
         xhr.abort();
       }
     }
-    xhrMap.clear();
+    xhrMapRef.current.clear();
     setFiles([]);
   }, []);
 
