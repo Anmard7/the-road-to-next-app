@@ -36,7 +36,7 @@ model Invitation {
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
-  @@id(name: "invitationId", fields: [organisationId,email])
+  @@id(name: "invitationId", fields: [organisationId, email])
   @@index([organisationId])
 }
 
@@ -130,9 +130,21 @@ model Ticket {
   comments       Comment[]
   organisationId String
   organisation   Organisation @relation(fields: [organisationId], references: [id], onDelete: Cascade)
+  attachments    Attachment[]
 
   @@index([userId])
   @@index([organisationId])
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
 }
 
 model Comment {

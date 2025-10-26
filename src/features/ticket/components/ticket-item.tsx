@@ -22,10 +22,11 @@ import { TicketMoreMenu } from './ticket-more-menu';
 type TicketItemProps = {
   ticket: TicketWithMetadata;
   isDetail?: boolean;
+  attachments?: React.ReactNode;
   comments?: React.ReactNode;
 };
 
-const TicketItem = ({ ticket, isDetail, comments }: TicketItemProps) => {
+const TicketItem = ({ ticket, isDetail, attachments, comments }: TicketItemProps) => {
   const detailButton = (
     <Button variant='outline' size='icon' asChild>
       <Link prefetch href={ticketPath(ticket.id)}>
@@ -98,6 +99,7 @@ const TicketItem = ({ ticket, isDetail, comments }: TicketItemProps) => {
           )}
         </div>
       </div>
+      {attachments}
       {comments}
     </div>
   );
