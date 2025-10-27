@@ -21,16 +21,22 @@ export const deleteOrganisation = async (organisationId: string) => {
       return toActionState('ERROR', 'Not a member of this organisation');
     }
 
-    // Query all attachments for tickets in this organization BEFORE deletion
+    // Query all attachments for tickets and commentsin this organization BEFORE deletion
     // This is crucial because cascade delete will remove the data after deletion
     const attachments = await prisma.attachment.findMany({
       where: {
-        ticket: {
-          organisationId,
-        },
+        OR: [
+          { ticket: { organisationId } },
+          { comment: { ticket: { organisationId } } },
+        ],
       },
       include: {
         ticket: true,
+        comment: {
+          include: {
+            ticket: true,
+          },
+        },
       },
     });
 
@@ -48,7 +54,6 @@ export const deleteOrganisation = async (organisationId: string) => {
           attachments: attachments.map((attachment) => ({
             id: attachment.id,
             name: attachment.name,
-            ticketId: attachment.ticketId,
           })),
         },
       });

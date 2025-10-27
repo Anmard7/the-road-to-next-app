@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import { AttachmentEntity } from '@/generated/prisma';
 import { confirmUpload } from '../actions/confirm-upload';
 import { generateUploadUrl } from '../actions/generate-upload-url';
 
@@ -31,7 +32,10 @@ interface UseDirectUploadReturn {
   isUploading: boolean;
 }
 
-export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
+export function useDirectUpload(
+  entityId: string,
+  entity: AttachmentEntity,
+): UseDirectUploadReturn {
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const xhrMapRef = useRef<Map<string, XMLHttpRequest>>(new Map());
@@ -49,52 +53,55 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
     [],
   );
 
-  const uploadFileToS3 = useCallback((
-    fileId: string,
-    file: File,
-    presignedUrl: string,
-    headers: Record<string, string>,
-  ): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhrMapRef.current.set(fileId, xhr);
+  const uploadFileToS3 = useCallback(
+    (
+      fileId: string,
+      file: File,
+      presignedUrl: string,
+      headers: Record<string, string>,
+    ): Promise<void> => {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhrMapRef.current.set(fileId, xhr);
 
-      // Track upload progress
-      xhr.upload.addEventListener('progress', (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = Math.round((e.loaded / e.total) * 100);
-          updateFileStatus(fileId, { progress: percentComplete });
-        }
-      });
+        // Track upload progress
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = Math.round((e.loaded / e.total) * 100);
+            updateFileStatus(fileId, { progress: percentComplete });
+          }
+        });
 
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve();
-        } else {
-          reject(
-            new Error(
-              `Upload failed with status ${xhr.status}: ${xhr.statusText}`,
-            ),
-          );
-        }
-      });
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+          } else {
+            reject(
+              new Error(
+                `Upload failed with status ${xhr.status}: ${xhr.statusText}`,
+              ),
+            );
+          }
+        });
 
-      xhr.addEventListener('error', () => {
-        reject(new Error('Network error during upload'));
-      });
+        xhr.addEventListener('error', () => {
+          reject(new Error('Network error during upload'));
+        });
 
-      xhr.addEventListener('abort', () => {
-        reject(new Error('Upload was cancelled'));
-      });
+        xhr.addEventListener('abort', () => {
+          reject(new Error('Upload was cancelled'));
+        });
 
-      xhr.open('PUT', presignedUrl);
-      // Apply required signed headers (e.g., Content-Type, SSE)
-      Object.entries(headers).forEach(([key, value]) => {
-        xhr.setRequestHeader(key, value);
+        xhr.open('PUT', presignedUrl);
+        // Apply required signed headers (e.g., Content-Type, SSE)
+        Object.entries(headers).forEach(([key, value]) => {
+          xhr.setRequestHeader(key, value);
+        });
+        xhr.send(file);
       });
-      xhr.send(file);
-    });
-  }, [updateFileStatus]);
+    },
+    [updateFileStatus],
+  );
 
   const uploadFiles = useCallback(
     async (filesToUpload: File[]) => {
@@ -119,7 +126,7 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
           // Step 1: Request presigned URL
           updateFileStatus(uploadFile.id, { status: 'requesting-url' });
 
-          const urlResponse = await generateUploadUrl(ticketId, {
+          const urlResponse = await generateUploadUrl(entityId, entity, {
             name: uploadFile.file.name,
             size: uploadFile.file.size,
             type: uploadFile.file.type,
@@ -176,7 +183,7 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
 
       setIsUploading(false);
     },
-    [ticketId, updateFileStatus, uploadFileToS3],
+    [entityId,entity, updateFileStatus, uploadFileToS3],
   );
 
   const retryFile = useCallback(
@@ -197,7 +204,7 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
         // Request new presigned URL
         updateFileStatus(fileId, { status: 'requesting-url' });
 
-        const urlResponse = await generateUploadUrl(ticketId, {
+        const urlResponse = await generateUploadUrl(entityId, entity, {
           name: file.file.name,
           size: file.file.size,
           type: file.file.type,
@@ -251,7 +258,7 @@ export function useDirectUpload(ticketId: string): UseDirectUploadReturn {
         setIsUploading(false);
       }
     },
-    [files, ticketId, updateFileStatus, uploadFileToS3],
+    [files, entityId, entity, updateFileStatus, uploadFileToS3],
   );
 
   const cancelFile = useCallback(

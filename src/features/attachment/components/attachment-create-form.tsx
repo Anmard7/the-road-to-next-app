@@ -4,16 +4,21 @@ import { AlertCircle, CheckCircle2, Loader2, RotateCcw, X } from 'lucide-react';
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { AttachmentEntity } from '@/generated/prisma';
 import { ACCEPTED, MAX_SIZE } from '../constants';
 import { useDirectUpload } from '../hooks/use-direct-upload';
 import { useFilePreview } from '../hooks/use-file-preview';
 import { AttachmentPreviewList } from './attachment-preview-list';
 
 type AttachmentCreateFormProps = {
-  ticketId: string;
+  entityId: string;
+  entity: AttachmentEntity;
 };
 
-const AttachmentCreateForm = ({ ticketId }: AttachmentCreateFormProps) => {
+const AttachmentCreateForm = ({
+  entityId,
+  entity,
+}: AttachmentCreateFormProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { items, validationError, validateAndSetFiles, removeItem, clearAll } =
     useFilePreview();
@@ -25,7 +30,7 @@ const AttachmentCreateForm = ({ ticketId }: AttachmentCreateFormProps) => {
     cancelFile,
     clearAll: clearAllUploads,
     isUploading,
-  } = useDirectUpload(ticketId);
+  } = useDirectUpload(entityId, entity as AttachmentEntity);
 
   const onFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;

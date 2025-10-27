@@ -4,7 +4,7 @@ import { CardCompact } from '@/components/card-compact';
 import { Heading } from '@/components/heading';
 import { Spinner } from '@/components/spinner';
 import { TicketList } from '@/features/ticket/components/ticket-list';
-import { TicketUpsertForm } from '@/features/ticket/components/ticket-upsert-form';
+import { TicketUpsertDialog } from '@/features/ticket/components/ticket-upsert-dialog';
 import { searchParamsCache } from '@/features/ticket/serach-params';
 
 type TicketsByOrganisationPageProps = {
@@ -25,7 +25,7 @@ const TicketsByOrganisationPage = async ({
           title='Create Ticket'
           description='A new ticket will be created for our organisation'
           className='w-full self-center'
-          content={<TicketUpsertForm />}
+          content={<TicketUpsertDialog />}
         />
         <Suspense fallback={<Spinner />}>
           <TicketList

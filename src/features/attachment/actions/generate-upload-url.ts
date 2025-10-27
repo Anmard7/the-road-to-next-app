@@ -8,9 +8,11 @@ import {
 } from '@/components/form/utils/to-action-state';
 import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-redirect';
 import { isOwner } from '@/features/auth/utils/is-owner';
+import { AttachmentEntity } from '@/generated/prisma';
 import { getPresignedPutUrl } from '@/lib/aws';
 import { prisma } from '@/lib/prisma';
 import { ACCEPTED, MAX_SIZE } from '../constants';
+import { getOrganisationIdByAttachment } from '../utils/attachment-helper';
 import { generateS3Key } from '../utils/generate-s3-key';
 import { sizeInMB } from '../utils/size';
 
@@ -28,22 +30,37 @@ interface GenerateUploadUrlResponse {
 }
 
 export const generateUploadUrl = async (
-  ticketId: string,
+  entityId: string,
+  entity: AttachmentEntity,
   fileMetadata: unknown,
 ): Promise<ActionState<GenerateUploadUrlResponse>> => {
   try {
     const { user } = await getAuthOrRedirect();
 
-    const ticket = await prisma.ticket.findUnique({
-      where: { id: ticketId },
-    });
+    let subject;
 
-    if (!ticket) {
-      return toActionState('ERROR', 'Ticket not found');
+    switch (entity) {
+      case 'TICKET':
+        subject = await prisma.ticket.findUnique({
+          where: { id: entityId },
+        });
+        break;
+      case 'COMMENT':
+        subject = await prisma.comment.findUnique({
+          where: { id: entityId },
+          include: { ticket: true },
+        });
+        break;
+      default:
+        return toActionState('ERROR', 'Subject not found');
     }
 
-    if (!isOwner(user, ticket)) {
-      return toActionState('ERROR', 'Not the owner of this ticket');
+    if (!subject) {
+      return toActionState('ERROR', 'Subject not found');
+    }
+
+    if (!isOwner(user, subject)) {
+      return toActionState('ERROR', 'Not the owner of this subject');
     }
 
     const { name, size, type } = generateUploadUrlSchema.parse(fileMetadata);
@@ -61,17 +78,21 @@ export const generateUploadUrl = async (
     const attachment = await prisma.attachment.create({
       data: {
         name,
-        ticketId,
+        ...(entity === 'TICKET' ? { ticketId: entityId } : {}),
+        ...(entity === 'COMMENT' ? { commentId: entityId } : {}),
+        entity,
         status: 'PENDING',
         contentType: type,
         size,
       },
     });
+    const organisationId = getOrganisationIdByAttachment(entity, subject);
 
     // Generate S3 key
     const key = generateS3Key({
-      organisationId: ticket.organisationId,
-      ticketId,
+      organisationId,
+      entityId,
+      entity,
       fileName: name,
       attachmentId: attachment.id,
     });
@@ -83,7 +104,7 @@ export const generateUploadUrl = async (
       expiresIn: 60,
     });
 
-    return toActionState('SUCCESS', 'Presigned URL generated',undefined, {
+    return toActionState('SUCCESS', 'Presigned URL generated', undefined, {
       url,
       headers,
       key,

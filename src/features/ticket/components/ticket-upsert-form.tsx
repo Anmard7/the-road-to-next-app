@@ -1,5 +1,5 @@
 'use client';
-import { useActionState, useRef } from 'react';
+import { type RefObject, useActionState, useRef } from 'react';
 import {
   DatePicker,
   ImperativeHandleFormDatePicker,
@@ -7,7 +7,10 @@ import {
 import { FieldError } from '@/components/form/field-error';
 import { Form } from '@/components/form/form';
 import { SubmitButton } from '@/components/form/submit-button';
-import { EMPTY_ACTION_STATE } from '@/components/form/utils/to-action-state';
+import {
+  ActionState,
+  EMPTY_ACTION_STATE,
+} from '@/components/form/utils/to-action-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,6 +21,98 @@ import { upsertTicket } from '../actions/upsert-ticket';
 type TicketUpsertFormProps = {
   ticket?: Ticket;
 };
+
+type TicketUpsertFieldsProps = {
+  actionState: ActionState;
+  ticket?: Ticket;
+  deadlineRef?: RefObject<ImperativeHandleFormDatePicker | null>;
+};
+
+const TicketUpsertFields = ({
+  actionState,
+  ticket,
+  deadlineRef,
+}: TicketUpsertFieldsProps) => {
+  return (
+    <>
+      <Label htmlFor='title'>Title</Label>
+      <Input
+        type='text'
+        name='title'
+        id='title'
+        defaultValue={
+          actionState.payload?.get('title')?.toString() ?? ticket?.title
+        }
+        aria-invalid={Boolean(actionState.fieldErrors.title?.length)}
+        aria-describedby='ticket-title-error'
+      />
+      <FieldError
+        actionState={actionState}
+        name='title'
+        id='ticket-title-error'
+      />
+
+      <Label htmlFor='content'>Content</Label>
+      <Textarea
+        name='content'
+        id='content'
+        defaultValue={
+          actionState.payload?.get('content')?.toString() ?? ticket?.content
+        }
+        aria-invalid={Boolean(actionState.fieldErrors.content?.length)}
+        aria-describedby='ticket-content-error'
+      />
+      <FieldError
+        actionState={actionState}
+        name='content'
+        id='ticket-content-error'
+      />
+      <div className='mb-1 flex gap-x-2'>
+        <div className='w-1/2'>
+          <Label htmlFor='deadline'>Deadline</Label>
+          <DatePicker
+            name='deadline'
+            id='deadline'
+            defaultValue={
+              actionState.payload?.get('deadline')?.toString() ??
+              ticket?.deadline
+            }
+            ref={deadlineRef}
+            aria-invalid={Boolean(actionState.fieldErrors.deadline?.length)}
+            aria-describedby='ticket-deadline-error'
+          />
+
+          <FieldError
+            actionState={actionState}
+            name='deadline'
+            id='ticket-deadline-error'
+          />
+        </div>
+        <div className='w-1/2'>
+          <Label htmlFor='bounty'>Bounty ($)</Label>
+          <Input
+            type='number'
+            name='bounty'
+            id='bounty'
+            step='0.01'
+            defaultValue={
+              actionState.payload?.get('bounty')?.toString() ??
+              (ticket?.bounty ? fromCent(ticket?.bounty) : '')
+            }
+            aria-invalid={Boolean(actionState.fieldErrors.bounty?.length)}
+            aria-describedby='ticket-bounty-error'
+          />
+          <FieldError
+            actionState={actionState}
+            name='bounty'
+            id='ticket-bounty-error'
+          />
+        </div>
+      </div>
+    </>
+  );
+};
+
 const TicketUpsertForm = ({ ticket }: TicketUpsertFormProps) => {
   const [actionState, action] = useActionState(
     upsertTicket.bind(null, ticket?.id),
@@ -32,64 +127,14 @@ const TicketUpsertForm = ({ ticket }: TicketUpsertFormProps) => {
 
   return (
     <Form action={action} actionState={actionState} onSuccess={handleSuccess}>
-      <Label htmlFor='title'>Title</Label>
-      <Input
-        type='text'
-        name='title'
-        id='title'
-        defaultValue={
-          actionState.payload?.get('title')?.toString() ?? ticket?.title
-        }
-        //required
+      <TicketUpsertFields
+        actionState={actionState}
+        ticket={ticket}
+        deadlineRef={datePickerImperativeHandleRef}
       />
-      <FieldError actionState={actionState} name='title' />
-
-      <Label htmlFor='content'>Content</Label>
-      <Textarea
-        name='content'
-        id='content'
-        defaultValue={
-          actionState.payload?.get('content')?.toString() ?? ticket?.content
-        }
-        //required
-      />
-      <FieldError actionState={actionState} name='content' />
-      <div className='mb-1 flex gap-x-2'>
-        <div className='w-1/2'>
-          <Label htmlFor='deadline'>Deadline</Label>
-          <DatePicker
-            //key={actionState.timestamp} // to force re-render the date picker and reset the date
-            name='deadline'
-            id='deadline'
-            defaultValue={
-              actionState.payload?.get('deadline')?.toString() ??
-              ticket?.deadline
-            }
-            ref={datePickerImperativeHandleRef}
-          />
-
-          <FieldError actionState={actionState} name='deadline' />
-        </div>
-        <div className='w-1/2'>
-          <Label htmlFor='bounty'>Bounty ($)</Label>
-          <Input
-            type='number'
-            name='bounty'
-            id='bounty'
-            step='0.01'
-            defaultValue={
-              actionState.payload?.get('bounty')?.toString() ??
-              (ticket?.bounty ? fromCent(ticket?.bounty) : '')
-            }
-            //required
-          />
-          <FieldError actionState={actionState} name='bounty' />
-        </div>
-      </div>
       <SubmitButton label={ticket ? 'Update' : 'Create'} />
-      {/* {actionState?.message && <p>{actionState.message}</p>} */}
     </Form>
   );
 };
 
-export { TicketUpsertForm };
+export { TicketUpsertFields, TicketUpsertForm };

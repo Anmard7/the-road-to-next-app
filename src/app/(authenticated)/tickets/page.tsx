@@ -7,7 +7,7 @@ import { getAuth } from '@/features/auth/queries/get-auth';
 import { getActiveOrganisation } from '@/features/organisation/queries/get-active-organisation';
 import { TicketFilterSwitch } from '@/features/ticket/components/ticket-filter-switch';
 import { TicketList } from '@/features/ticket/components/ticket-list';
-import { TicketUpsertForm } from '@/features/ticket/components/ticket-upsert-form';
+import { TicketUpsertDialog } from '@/features/ticket/components/ticket-upsert-dialog';
 import { searchParamsCache } from '@/features/ticket/serach-params';
 
 type TicketsPageProps = {
@@ -33,7 +33,7 @@ const TicketsPage = async ({ searchParams }: TicketsPageProps) => {
           className='w-full self-center'
           title='Create Ticket'
           description='Create a new ticket to get started'
-          content={<TicketUpsertForm />}
+          content={<TicketUpsertDialog />}
         />
         <Suspense fallback={<Spinner />}>
           <TicketList

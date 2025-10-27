@@ -12,6 +12,8 @@ import { isOwner } from '@/features/auth/utils/is-owner';
 import { s3 } from '@/lib/aws';
 import { prisma } from '@/lib/prisma';
 import { ticketPath } from '@/paths';
+import { isComment, isTicket } from '../types';
+import { getOrganisationIdByAttachment } from '../utils/attachment-helper';
 import { generateS3Key } from '../utils/generate-s3-key';
 
 export const confirmUpload = async (
@@ -23,15 +25,20 @@ export const confirmUpload = async (
     // Fetch attachment with ticket relation
     const attachment = await prisma.attachment.findUnique({
       where: { id: attachmentId },
-      include: { ticket: true },
+      include: { ticket: true, comment: { include: { ticket: true } } },
     });
 
     if (!attachment) {
       return toActionState('ERROR', 'Attachment not found');
     }
 
+    const subject = attachment.ticket ?? attachment.comment;
+    if (!subject) {
+      return toActionState('ERROR', 'Subject not found');
+    }
+
     // Verify user is ticket owner (authorization)
-    if (!isOwner(user, attachment.ticket)) {
+    if (!isOwner(user, subject)) {
       return toActionState('ERROR', 'Not authorized to confirm this upload');
     }
 
@@ -40,12 +47,17 @@ export const confirmUpload = async (
       return toActionState('ERROR', 'Attachment is not in pending state');
     }
 
+    const organisationId = getOrganisationIdByAttachment(
+      attachment.entity,
+      subject,
+    );
     // Verify S3 object exists
     const headCommand = new HeadObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: generateS3Key({
-        organisationId: attachment.ticket.organisationId,
-        ticketId: attachment.ticket.id,
+        organisationId,
+        entityId: subject.id,
+        entity: attachment.entity,
         fileName: attachment.name,
         attachmentId: attachment.id,
       }),
@@ -85,11 +97,23 @@ export const confirmUpload = async (
         status: 'CONFIRMED',
         etag: s3Metadata.ETag,
       },
-      include: { ticket: true },
+      include: { ticket: true, comment: true },
     });
 
     // Revalidate the ticket page to show the new attachment
-    revalidatePath(ticketPath(updatedAttachment.ticket.id));
+    switch (attachment.entity) {
+      case 'TICKET':
+        if (isTicket(subject)) {
+          revalidatePath(ticketPath(subject.id));
+        }
+        break;
+      case 'COMMENT': {
+        if (isComment(subject)) {
+          revalidatePath(ticketPath(subject.ticket.id));
+        }
+        break;
+      }
+    }
 
     return toActionState('SUCCESS', 'Upload confirmed', undefined, {
       attachmentId: updatedAttachment.id,

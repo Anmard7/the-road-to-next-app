@@ -1,6 +1,9 @@
+import { AttachmentEntity } from '@/generated/prisma';
+
 type GenerateKeyArgs = {
   organisationId: string;
-  ticketId: string;
+  entityId: string;
+  entity: AttachmentEntity;
   fileName: string;
   attachmentId: string;
 };
@@ -40,12 +43,13 @@ const sanitizeFileName = (input: string): string => {
 
 export const generateS3Key = ({
   organisationId,
-  ticketId,
+  entityId,
+  entity,
   fileName,
   attachmentId,
 }: GenerateKeyArgs) => {
   const safeFileName = sanitizeFileName(fileName);
-  return `${organisationId}/${ticketId}/${safeFileName}-${attachmentId}`;
+  return `${organisationId}/${entity}/${entityId}/${safeFileName}-${attachmentId}`;
 };
 
 export { sanitizeFileName };

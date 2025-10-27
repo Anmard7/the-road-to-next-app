@@ -139,27 +139,37 @@ model Ticket {
 model Attachment {
   id          String           @id @default(cuid())
   name        String           @db.VarChar(255)
+  entity      AttachmentEntity
   status      AttachmentStatus @default(PENDING)
   etag        String?
   contentType String?
   size        Int?
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
-  ticketId    String
-  ticket      Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId    String?
+  ticket      Ticket?          @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  commentId   String?
+  comment     Comment?         @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
+  @@index([commentId])
+}
+
+enum AttachmentEntity {
+  TICKET
+  COMMENT
 }
 
 model Comment {
-  id        String   @id @default(cuid())
-  content   String   @db.VarChar(1024)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id          String       @id @default(cuid())
+  content     String       @db.VarChar(1024)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  ticketId    String
+  ticket      Ticket       @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attachments Attachment[]
 
   @@index([ticketId])
   @@index([userId])

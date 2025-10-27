@@ -7,7 +7,6 @@ export type OrganisationDeleteEventArgs = {
     attachments: Array<{
       id: string;
       name: string;
-      ticketId: string;
     }>;
   };
 };
