@@ -13,6 +13,7 @@ import { getPresignedPutUrl } from '@/lib/aws';
 import { prisma } from '@/lib/prisma';
 import { ACCEPTED, MAX_SIZE } from '../constants';
 import { getOrganisationIdByAttachment } from '../utils/attachment-helper';
+import { buildAttachmentCreateData } from '../utils/build-attachment-data';
 import { generateS3Key } from '../utils/generate-s3-key';
 import { sizeInMB } from '../utils/size';
 
@@ -75,16 +76,14 @@ export const generateUploadUrl = async (
     }
 
     // Create pending attachment record
+    const attachmentData = buildAttachmentCreateData(entityId, entity, {
+      name,
+      size,
+      contentType: type,
+    });
+
     const attachment = await prisma.attachment.create({
-      data: {
-        name,
-        ...(entity === 'TICKET' ? { ticketId: entityId } : {}),
-        ...(entity === 'COMMENT' ? { commentId: entityId } : {}),
-        entity,
-        status: 'PENDING',
-        contentType: type,
-        size,
-      },
+      data: attachmentData,
     });
     const organisationId = getOrganisationIdByAttachment(entity, subject);
 

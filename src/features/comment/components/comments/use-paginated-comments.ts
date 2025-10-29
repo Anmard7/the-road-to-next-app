@@ -49,5 +49,15 @@ export const usePaginatedComments = (
      */
     onDeleteComment: () =>
       queryClient.invalidateQueries({ queryKey: Array.from(queryKey) }),
+    /**
+     * Invalidates the comments query to refetch the comments when a comment attachment is created.
+     */
+    onCreateAttachment: () =>
+      queryClient.invalidateQueries({ queryKey: Array.from(queryKey) }),
+    /**
+     * Invalidates the comments query to refetch the comments when a comment attachment is deleted.
+     */
+    onDeleteAttachment: () =>
+      queryClient.invalidateQueries({ queryKey: Array.from(queryKey) }),
   };
 };

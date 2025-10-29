@@ -10,14 +10,27 @@ import { useDirectUpload } from '../hooks/use-direct-upload';
 import { useFilePreview } from '../hooks/use-file-preview';
 import { AttachmentPreviewList } from './attachment-preview-list';
 
+type AttachmentCreateFormButtonsProps = {
+  onUpload: () => Promise<void>;
+  disabled: boolean;
+  isUploading: boolean;
+  hasItems: boolean;
+  itemCount: number;
+  validationError: string | null;
+};
+
 type AttachmentCreateFormProps = {
   entityId: string;
   entity: AttachmentEntity;
+  buttons?: (props: AttachmentCreateFormButtonsProps) => React.ReactNode;
+  onSuccess?: () => void;
 };
 
 const AttachmentCreateForm = ({
   entityId,
   entity,
+  buttons,
+  onSuccess,
 }: AttachmentCreateFormProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { items, validationError, validateAndSetFiles, removeItem, clearAll } =
@@ -30,7 +43,7 @@ const AttachmentCreateForm = ({
     cancelFile,
     clearAll: clearAllUploads,
     isUploading,
-  } = useDirectUpload(entityId, entity as AttachmentEntity);
+  } = useDirectUpload(entityId, entity as AttachmentEntity, { onSuccess });
 
   const onFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
@@ -105,6 +118,22 @@ const AttachmentCreateForm = ({
     }
   };
 
+  const hasItems = items.length > 0;
+  const itemCount = items.length;
+  const uploadDisabled = isUploading || !hasItems || !!validationError;
+  const renderedButtons = buttons
+    ? buttons({
+        onUpload: onUploadClick,
+        disabled: uploadDisabled,
+        isUploading,
+        hasItems,
+        itemCount,
+        validationError,
+      })
+    : null;
+  const showDefaultUploadButton =
+    !buttons && hasItems && uploadedFiles.length === 0;
+
   return (
     <div className='flex flex-col gap-y-4'>
       {/* File Selection Section */}
@@ -140,15 +169,19 @@ const AttachmentCreateForm = ({
       {/* Preview List */}
       <AttachmentPreviewList items={items} onRemove={onRemoveItem} />
 
-      {/* Upload Button */}
-      {items.length > 0 && uploadedFiles.length === 0 && (
-        <Button
-          onClick={onUploadClick}
-          disabled={!!validationError}
-          className='w-full'
-        >
-          Upload {items.length} file{items.length !== 1 ? 's' : ''}
-        </Button>
+      {/* Cancel and Upload Buttons */}
+      {buttons ? (
+        renderedButtons
+      ) : (
+        showDefaultUploadButton && (
+          <Button
+            onClick={() => void onUploadClick()}
+            disabled={uploadDisabled}
+            className='w-full'
+          >
+            Upload {itemCount} file{itemCount !== 1 ? 's' : ''}
+          </Button>
+        )
       )}
 
       {/* Upload Progress Section */}

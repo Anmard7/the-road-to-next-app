@@ -35,6 +35,7 @@ export function CommentRow({ comment, canEdit }: CommentRowProps) {
   return (
     <CommentItem
       comment={comment}
+      sections={[]}
       buttons={
         canEdit
           ? [

@@ -27,6 +27,7 @@ export const getComments = async (
         user: {
           select: { username: true },
         },
+        attachments: true,
       },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     }),

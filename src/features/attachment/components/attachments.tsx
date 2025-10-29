@@ -31,7 +31,9 @@ const Attachments = async ({ entityId, entity, isOwner }: AttachmentsProps) => {
           />
 
           {/* create attachment form */}
-          {isOwner && <AttachmentCreateForm entityId={entityId} entity={entity}/>}
+          {isOwner && (
+            <AttachmentCreateForm entityId={entityId} entity={entity} />
+          )}
         </>
       }
     />

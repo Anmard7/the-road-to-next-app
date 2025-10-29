@@ -32,6 +32,26 @@ export const confirmUpload = async (
       return toActionState('ERROR', 'Attachment not found');
     }
 
+    // Validate exactly one foreign key is set
+    const hasTicket = !!attachment.ticketId;
+    const hasComment = !!attachment.commentId;
+
+    if (hasTicket === hasComment) {
+      // Both true or both false
+      return toActionState(
+        'ERROR',
+        'Invalid attachment: must belong to exactly one entity',
+      );
+    }
+
+    // Ensure entity matches the foreign key
+    if (attachment.entity === 'TICKET' && !hasTicket) {
+      return toActionState('ERROR', 'Invalid attachment: entity mismatch');
+    }
+    if (attachment.entity === 'COMMENT' && !hasComment) {
+      return toActionState('ERROR', 'Invalid attachment: entity mismatch');
+    }
+
     const subject = attachment.ticket ?? attachment.comment;
     if (!subject) {
       return toActionState('ERROR', 'Subject not found');

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { AttachmentEntity } from '@/generated/prisma';
 import { confirmUpload } from '../actions/confirm-upload';
 import { generateUploadUrl } from '../actions/generate-upload-url';
@@ -23,6 +24,10 @@ export interface UploadFile {
   attachmentId?: string;
 }
 
+interface UseDirectUploadOptions {
+  onSuccess?: () => void;
+}
+
 interface UseDirectUploadReturn {
   files: UploadFile[];
   uploadFiles: (filesToUpload: File[]) => Promise<void>;
@@ -32,10 +37,17 @@ interface UseDirectUploadReturn {
   isUploading: boolean;
 }
 
+type UploadOutcome = {
+  status: UploadStatus;
+  error?: string;
+};
+
 export function useDirectUpload(
   entityId: string,
   entity: AttachmentEntity,
+  options: UseDirectUploadOptions = {},
 ): UseDirectUploadReturn {
+  const { onSuccess } = options;
   const [files, setFiles] = useState<UploadFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const xhrMapRef = useRef<Map<string, XMLHttpRequest>>(new Map());
@@ -103,143 +115,81 @@ export function useDirectUpload(
     [updateFileStatus],
   );
 
-  const uploadFiles = useCallback(
-    async (filesToUpload: File[]) => {
-      if (filesToUpload.length === 0) return;
-
-      setIsUploading(true);
-
-      // Initialize file tracking
-      const initialFiles = filesToUpload.map((file) => ({
-        id: generateFileId(file),
-        file,
-        name: file.name,
-        progress: 0,
-        status: 'idle' as UploadStatus,
-      }));
-
-      setFiles((prev) => [...prev, ...initialFiles]);
-
-      // Upload each file sequentially
-      for (const uploadFile of initialFiles) {
-        try {
-          // Step 1: Request presigned URL
-          updateFileStatus(uploadFile.id, { status: 'requesting-url' });
-
-          const urlResponse = await generateUploadUrl(entityId, entity, {
-            name: uploadFile.file.name,
-            size: uploadFile.file.size,
-            type: uploadFile.file.type,
-          });
-
-          if (urlResponse.status === 'ERROR') {
-            updateFileStatus(uploadFile.id, {
-              status: 'error',
-              error: urlResponse.message,
-            });
-            continue;
-          }
-
-          const { url, headers, attachmentId } = urlResponse.data!;
-
-          // Step 2: Upload to S3
-          updateFileStatus(uploadFile.id, {
-            status: 'uploading',
-            attachmentId,
-            progress: 0,
-          });
-
-          await uploadFileToS3(uploadFile.id, uploadFile.file, url, headers);
-
-          // Step 3: Confirm upload with server
-          updateFileStatus(uploadFile.id, { status: 'confirming' });
-
-          const confirmResponse = await confirmUpload(attachmentId);
-
-          if (confirmResponse.status === 'ERROR') {
-            updateFileStatus(uploadFile.id, {
-              status: 'error',
-              error: confirmResponse.message,
-            });
-            continue;
-          }
-
-          // Success
-          updateFileStatus(uploadFile.id, {
-            status: 'success',
-            progress: 100,
-          });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error occurred';
-          updateFileStatus(uploadFile.id, {
-            status: 'error',
-            error: errorMessage,
-          });
-        } finally {
-          xhrMapRef.current.delete(uploadFile.id);
-        }
+  const handleBatchComplete = useCallback(
+    (results: UploadOutcome[]): boolean => {
+      if (results.length === 0) {
+        return false;
       }
 
-      setIsUploading(false);
+      const successCount = results.filter(
+        (result) => result.status === 'success',
+      ).length;
+      const errorCount = results.filter(
+        (result) => result.status === 'error',
+      ).length;
+      const totalCount = results.length;
+
+      if (successCount === totalCount) {
+        toast.success(
+          `Uploaded ${successCount} file${successCount !== 1 ? 's' : ''}`,
+        );
+        return true;
+      }
+
+      if (successCount > 0) {
+        toast.warning(
+          `${successCount} of ${totalCount} uploaded; ${errorCount} failed`,
+        );
+      } else {
+        const firstError =
+          results.find((result) => result.status === 'error' && result.error)
+            ?.error ?? 'Unknown error';
+        toast.error(`Upload failed: ${firstError}`);
+      }
+
+      return false;
     },
-    [entityId,entity, updateFileStatus, uploadFileToS3],
+    [],
   );
 
-  const retryFile = useCallback(
-    async (fileId: string) => {
-      const file = files.find((f) => f.id === fileId);
-      if (!file) return;
+  const runUpload = useCallback(
+    async (fileId: string, file: File): Promise<UploadOutcome> => {
+      let finalStatus: UploadStatus = 'success';
+      let errorMessage: string | undefined;
 
       try {
-        // Reset file state
         updateFileStatus(fileId, {
-          status: 'idle',
+          status: 'requesting-url',
           error: undefined,
           progress: 0,
         });
 
-        setIsUploading(true);
-
-        // Request new presigned URL
-        updateFileStatus(fileId, { status: 'requesting-url' });
-
         const urlResponse = await generateUploadUrl(entityId, entity, {
-          name: file.file.name,
-          size: file.file.size,
-          type: file.file.type,
+          name: file.name,
+          size: file.size,
+          type: file.type,
         });
 
         if (urlResponse.status === 'ERROR') {
-          updateFileStatus(fileId, {
-            status: 'error',
-            error: urlResponse.message,
-          });
-          return;
+          throw new Error(urlResponse.message);
         }
 
         const { url, headers, attachmentId } = urlResponse.data!;
 
-        // Upload to S3
         updateFileStatus(fileId, {
           status: 'uploading',
           attachmentId,
           progress: 0,
         });
 
-        await uploadFileToS3(fileId, file.file, url, headers);
+        await uploadFileToS3(fileId, file, url, headers);
 
-        // Confirm upload
         updateFileStatus(fileId, { status: 'confirming' });
 
         const confirmResponse = await confirmUpload(attachmentId);
 
         if (confirmResponse.status === 'ERROR') {
-          updateFileStatus(fileId, {
-            status: 'error',
-            error: confirmResponse.message,
-          });
-          return;
+          throw new Error(confirmResponse.message);
         }
 
         updateFileStatus(fileId, {
@@ -247,7 +197,8 @@ export function useDirectUpload(
           progress: 100,
         });
       } catch (error) {
-        const errorMessage =
+        finalStatus = 'error';
+        errorMessage =
           error instanceof Error ? error.message : 'Unknown error occurred';
         updateFileStatus(fileId, {
           status: 'error',
@@ -255,10 +206,73 @@ export function useDirectUpload(
         });
       } finally {
         xhrMapRef.current.delete(fileId);
+      }
+
+      return {
+        status: finalStatus,
+        error: errorMessage,
+      };
+    },
+    [entityId, entity, updateFileStatus, uploadFileToS3],
+  );
+
+  const uploadFiles = useCallback(
+    async (filesToUpload: File[]) => {
+      if (filesToUpload.length === 0) return;
+
+      setIsUploading(true);
+      let hasCalledSuccess = false;
+
+      try {
+        const initialFiles = filesToUpload.map((file) => ({
+          id: generateFileId(file),
+          file,
+          name: file.name,
+          progress: 0,
+          status: 'idle' as UploadStatus,
+        }));
+
+        setFiles((prev) => [...prev, ...initialFiles]);
+
+        const batchResults: UploadOutcome[] = [];
+
+        for (const uploadFile of initialFiles) {
+          const result = await runUpload(uploadFile.id, uploadFile.file);
+          batchResults.push(result);
+        }
+
+        const allSucceeded = handleBatchComplete(batchResults);
+
+        if (allSucceeded && !hasCalledSuccess) {
+          hasCalledSuccess = true;
+          onSuccess?.();
+        }
+      } finally {
         setIsUploading(false);
       }
     },
-    [files, entityId, entity, updateFileStatus, uploadFileToS3],
+    [handleBatchComplete, onSuccess, runUpload],
+  );
+
+  const retryFile = useCallback(
+    async (fileId: string) => {
+      const file = files.find((f) => f.id === fileId);
+      if (!file) return;
+
+      setIsUploading(true);
+
+      try {
+        const result = await runUpload(fileId, file.file);
+        const succeeded = handleBatchComplete([result]);
+
+        if (succeeded) {
+          onSuccess?.();
+        }
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [files, handleBatchComplete, onSuccess, runUpload],
   );
 
   const cancelFile = useCallback(
