@@ -12,8 +12,9 @@ import { isOwner } from '@/features/auth/utils/is-owner';
 import { s3 } from '@/lib/aws';
 import { prisma } from '@/lib/prisma';
 import { ticketPath } from '@/paths';
+import * as attachmentData from '../data';
+import * as attachmentSubjectDTO from '../dto/attachment-subject-dto';
 import { isComment, isTicket } from '../types';
-import { getOrganisationIdByAttachment } from '../utils/attachment-helper';
 import { generateS3Key } from '../utils/generate-s3-key';
 
 export const confirmUpload = async (
@@ -23,9 +24,9 @@ export const confirmUpload = async (
     const { user } = await getAuthOrRedirect();
 
     // Fetch attachment with ticket relation
-    const attachment = await prisma.attachment.findUnique({
-      where: { id: attachmentId },
-      include: { ticket: true, comment: { include: { ticket: true } } },
+    const attachment = await attachmentData.getAttachment(attachmentId, {
+      includeTicket: true,
+      includeComment: true,
     });
 
     if (!attachment) {
@@ -52,8 +53,16 @@ export const confirmUpload = async (
       return toActionState('ERROR', 'Invalid attachment: entity mismatch');
     }
 
-    const subject = attachment.ticket ?? attachment.comment;
-    if (!subject) {
+    let subject;
+    switch (attachment.entity) {
+      case 'TICKET':
+        subject = attachmentSubjectDTO.fromTicket(attachment.ticket);
+        break;
+      case 'COMMENT':
+        subject = attachmentSubjectDTO.fromComment(attachment.comment);
+        break;
+    }
+    if (!subject || !attachment) {
       return toActionState('ERROR', 'Subject not found');
     }
 
@@ -67,16 +76,12 @@ export const confirmUpload = async (
       return toActionState('ERROR', 'Attachment is not in pending state');
     }
 
-    const organisationId = getOrganisationIdByAttachment(
-      attachment.entity,
-      subject,
-    );
     // Verify S3 object exists
     const headCommand = new HeadObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: generateS3Key({
-        organisationId,
-        entityId: subject.id,
+        organisationId: subject.organisationId,
+        entityId: subject.entityId,
         entity: attachment.entity,
         fileName: attachment.name,
         attachmentId: attachment.id,
@@ -123,13 +128,13 @@ export const confirmUpload = async (
     // Revalidate the ticket page to show the new attachment
     switch (attachment.entity) {
       case 'TICKET':
-        if (isTicket(subject)) {
-          revalidatePath(ticketPath(subject.id));
+        if (attachment.ticket && isTicket(attachment.ticket)) {
+          revalidatePath(ticketPath(attachment.ticket.id));
         }
         break;
       case 'COMMENT': {
-        if (isComment(subject)) {
-          revalidatePath(ticketPath(subject.ticket.id));
+        if (attachment.comment && isComment(attachment.comment)) {
+          revalidatePath(ticketPath(attachment.comment.ticket.id));
         }
         break;
       }

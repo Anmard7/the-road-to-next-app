@@ -11,6 +11,7 @@ type AttachmentSubjectTicket = Prisma.TicketGetPayload<{
   select: {
     id: true;
     organisationId: true;
+    userId: true;
   };
 }>;
 

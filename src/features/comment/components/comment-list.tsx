@@ -1,7 +1,5 @@
-import { AttachmentCreateButton } from '@/features/attachment/components/attachment-create-button';
 import { AttachmentDeleteButton } from '@/features/attachment/components/attachment-delete-button';
 import { AttachmentList } from '@/features/attachment/components/attachment-list';
-import { AttachmentEntity } from '@/generated/prisma';
 import { CommentWithMetadata } from '../types';
 import { CommentDeleteButton } from './comment-delete-button';
 import { CommentItem } from './comment-item';
@@ -9,27 +7,17 @@ import { CommentItem } from './comment-item';
 type CommentListProps = {
   comments: CommentWithMetadata[];
   onDeleteComment: (id: string) => void;
-  onCreateAttachment: () => void;
   onDeleteAttachment: (id: string) => void;
 };
 
 const CommentList = ({
   comments,
   onDeleteComment,
-  onCreateAttachment,
   onDeleteAttachment,
 }: CommentListProps) => {
   return (
     <>
       {comments.map((comment) => {
-        const attachmentCreateButton = (
-          <AttachmentCreateButton
-            key='0'
-            entityId={comment.id}
-            entity={AttachmentEntity.COMMENT}
-            onCreateAttachment={onCreateAttachment}
-          />
-        );
         const commentDeleteButton = (
           <CommentDeleteButton
             key='1'
@@ -38,11 +26,7 @@ const CommentList = ({
           />
         );
 
-        const buttons = [
-          ...(comment.isOwner
-            ? [attachmentCreateButton, commentDeleteButton]
-            : []),
-        ];
+        const buttons = [...(comment.isOwner ? [commentDeleteButton] : [])];
         const sections = [];
 
         if (comment.attachments.length) {
@@ -53,7 +37,13 @@ const CommentList = ({
                 attachments={comment.attachments}
                 buttons={(attachmentId: string) => [
                   ...(comment.isOwner
-                    ? [<AttachmentDeleteButton key='0' id={attachmentId} onDeleteAttachment={onDeleteAttachment} />]
+                    ? [
+                        <AttachmentDeleteButton
+                          key='0'
+                          id={attachmentId}
+                          onDeleteAttachment={onDeleteAttachment}
+                        />,
+                      ]
                     : []),
                 ]}
               />

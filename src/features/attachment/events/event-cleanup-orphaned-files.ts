@@ -2,7 +2,7 @@ import { ListObjectsV2Command } from '@aws-sdk/client-s3';
 import { s3 } from '@/lib/aws';
 import { inngest } from '@/lib/inngest';
 import { prisma } from '@/lib/prisma';
-import { getOrganisationIdByAttachment } from '../utils/attachment-helper';
+import * as attachmentService from '../service';
 import { deleteS3ObjectsByKeys } from '../utils/delete-s3-objects';
 import { generateS3Key } from '../utils/generate-s3-key';
 import { parseS3Key } from '../utils/parse-s3-key';
@@ -50,17 +50,16 @@ const cleanupExpiredPendingAttachments = async () => {
     const attachmentIdsToDelete: string[] = [];
 
     for (const attachment of expiredPending) {
-      const subject = attachment.ticket ?? attachment.comment;
+      const subject = await attachmentService.getAttachmentSubject(
+        attachment.id,
+        attachment.entity,
+      );
       if (!subject) {
         continue;
       }
-      const organisationId = getOrganisationIdByAttachment(
-        attachment.entity,
-        subject,
-      );
       const key = generateS3Key({
-        organisationId,
-        entityId: subject.id,
+        organisationId: subject.organisationId,
+        entityId: subject.entityId,
         entity: attachment.entity,
         fileName: attachment.name,
         attachmentId: attachment.id,

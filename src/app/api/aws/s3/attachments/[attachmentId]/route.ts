@@ -1,11 +1,11 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { NextRequest } from 'next/server';
-import { getOrganisationIdByAttachment } from '@/features/attachment/utils/attachment-helper';
+import * as attachmentData from '@/features/attachment/data';
+import * as attachmentSubjectDTO from '@/features/attachment/dto/attachment-subject-dto';
 import { generateS3Key } from '@/features/attachment/utils/generate-s3-key';
 import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-redirect';
 import { s3 } from '@/lib/aws';
-import { prisma } from '@/lib/prisma';
 
 export async function GET(
   request: NextRequest,
@@ -15,35 +15,31 @@ export async function GET(
 
   const { attachmentId } = await params;
 
-  const attachment = await prisma.attachment.findUniqueOrThrow({
-    where: {
-      id: attachmentId,
-    },
-    include: {
-      ticket: true,
-      comment: {
-        include: {
-          ticket: true,
-        },
-      },
-    },
+  const attachment = await attachmentData.getAttachment(attachmentId, {
+    includeTicket: true,
+    includeComment: true,
   });
 
-  const subject = attachment.ticket ?? attachment.comment;
-  if (!subject) {
+  let subject;
+  switch (attachment?.entity) {
+    case 'TICKET':
+      subject = attachmentSubjectDTO.fromTicket(attachment.ticket);
+      break;
+    case 'COMMENT':
+      subject = attachmentSubjectDTO.fromComment(attachment.comment);
+      break;
+  }
+  if (!subject || !attachment) {
     return new Response('Subject not found', { status: 404 });
   }
-  const organisationId = getOrganisationIdByAttachment(
-    attachment.entity,
-    subject,
-  );
+
   const presignedUrl = await getSignedUrl(
     s3,
     new GetObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: generateS3Key({
-        organisationId,
-        entityId: subject.id,
+        organisationId: subject.organisationId,
+        entityId: subject.entityId,
         entity: attachment.entity,
         fileName: attachment.name,
         attachmentId: attachment.id,

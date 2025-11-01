@@ -8,11 +8,10 @@ import {
 } from '@/components/form/utils/to-action-state';
 import { getAuthOrRedirect } from '@/features/auth/queries/get-auth-or-redirect';
 import { isOwner } from '@/features/auth/utils/is-owner';
-import { AttachmentEntity } from '@/generated/prisma';
+import type { AttachmentEntity } from '@/generated/prisma/client';
 import { getPresignedPutUrl } from '@/lib/aws';
-import { prisma } from '@/lib/prisma';
 import { ACCEPTED, MAX_SIZE } from '../constants';
-import { getOrganisationIdByAttachment } from '../utils/attachment-helper';
+import * as attachmentService from '../service';
 import { buildAttachmentCreateData } from '../utils/build-attachment-data';
 import { generateS3Key } from '../utils/generate-s3-key';
 import { sizeInMB } from '../utils/size';
@@ -38,23 +37,10 @@ export const generateUploadUrl = async (
   try {
     const { user } = await getAuthOrRedirect();
 
-    let subject;
-
-    switch (entity) {
-      case 'TICKET':
-        subject = await prisma.ticket.findUnique({
-          where: { id: entityId },
-        });
-        break;
-      case 'COMMENT':
-        subject = await prisma.comment.findUnique({
-          where: { id: entityId },
-          include: { ticket: true },
-        });
-        break;
-      default:
-        return toActionState('ERROR', 'Subject not found');
-    }
+    const subject = await attachmentService.getAttachmentSubject(
+      entityId,
+      entity,
+    );
 
     if (!subject) {
       return toActionState('ERROR', 'Subject not found');
@@ -76,20 +62,19 @@ export const generateUploadUrl = async (
     }
 
     // Create pending attachment record
-    const attachmentData = buildAttachmentCreateData(entityId, entity, {
+    const attachmentCreateData = buildAttachmentCreateData(entityId, entity, {
       name,
       size,
       contentType: type,
     });
 
-    const attachment = await prisma.attachment.create({
-      data: attachmentData,
-    });
-    const organisationId = getOrganisationIdByAttachment(entity, subject);
+    const attachment = await attachmentService.createPendingAttachment(
+      attachmentCreateData,
+    );
 
     // Generate S3 key
     const key = generateS3Key({
-      organisationId,
+      organisationId: subject.organisationId,
       entityId,
       entity,
       fileName: name,

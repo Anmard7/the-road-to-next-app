@@ -7,7 +7,9 @@ import {
   ActionState,
   EMPTY_ACTION_STATE,
 } from '@/components/form/utils/to-action-state';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { ACCEPTED } from '@/features/attachment/constants';
 import { createComment } from '../actions/create-comment';
 import { CommentWithMetadata } from '../types';
 
@@ -20,13 +22,16 @@ const CommentCreateForm = ({
   ticketId,
   onCreateComment,
 }: CommentCreateFormProps) => {
-  const createCommentWithpromise = createComment<
-    CommentWithMetadata | undefined
-  >;
+  
+  const createCommentAction = (
+    state: ActionState<CommentWithMetadata | undefined>,
+    formData: FormData,
+  ) =>
+    createComment<CommentWithMetadata | undefined>(ticketId, state, formData);
   const [actionState, action] = useActionState<
     ActionState<CommentWithMetadata | undefined>,
     FormData
-  >(createCommentWithpromise.bind(null, ticketId), EMPTY_ACTION_STATE);
+  >(createCommentAction, EMPTY_ACTION_STATE);
 
   const handleSuccess = (
     actionState: ActionState<CommentWithMetadata | undefined>,
@@ -39,6 +44,14 @@ const CommentCreateForm = ({
     <Form action={action} actionState={actionState} onSuccess={handleSuccess}>
       <Textarea name='content' placeholder="What's on your mind ..." />
       <FieldError actionState={actionState} name='content' />
+      <Input
+        id='files'
+        name='files'
+        type='file'
+        multiple
+        accept={ACCEPTED.join(',')}
+      />
+      <FieldError actionState={actionState} name='files' />
 
       <SubmitButton label='Comment' />
     </Form>

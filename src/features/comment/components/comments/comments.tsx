@@ -23,7 +23,6 @@ const Comments = ({ ticketId, paginatedComments }: CommentsProps) => {
     isFetchingNextPage,
     onCreateComment,
     onDeleteComment,
-    onCreateAttachment,
     onDeleteAttachment,
   } = usePaginatedComments(ticketId, paginatedComments);
 
@@ -49,7 +48,6 @@ const Comments = ({ ticketId, paginatedComments }: CommentsProps) => {
         <CommentList
           comments={comments}
           onDeleteComment={onDeleteComment}
-          onCreateAttachment={onCreateAttachment}
           onDeleteAttachment={onDeleteAttachment}
         />
 
